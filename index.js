@@ -26,7 +26,9 @@ app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 app.use(cors());
 app.use(express.json({ limit: "500mb" }));
 const adminRoute = require("./routes/admindashboard");
+const game = require("./routes/GameRoute")
 app.use("/admin", adminRoute);
+app.use("/game", game)
 const userid = [];
 
 io.on("connection", (socket) => {

@@ -1,5 +1,6 @@
 const adminModel = require("../models/adminModel");
 const nodemailer = require("nodemailer");
+const quizModel = require("../models/QuizQuestionModel")
 const jwt = require("jsonwebtoken");
 const falseStatus = false;
 const trueStatus = true;
@@ -156,7 +157,154 @@ const emailVerification = (req, res) => {
     }
   });
 };
+
+const login = (req, res) => {
+  console.log(req.body)
+  adminModel.findOne({ adminUserName: req.body.userName }, (err, admin) => {
+    if (err) {
+     res.send({message:"an error occured", status:false})
+    } else {
+      if (admin !== null) { 
+        console.log(admin)
+        admin.validatePassword(req.body.password, (err, same) => {
+          if (err) {
+            res.send({message:"an error occured", status:false})
+          } else {
+            console.log(same)
+            if (same) {
+              if (admin.adminEmailVerificationStatus) {
+                let userid = jwt.sign({ userId: admin.id }, process.env.Secret, { expiresIn: "7d" })
+                res.send({message:"success", status:true, adminId:userid})
+              } else {
+                  let jwtCode = jwt.sign({ userid: admin.id }, process.env.Secret, { expiresIn: "7d" })
+                 var transporter = nodemailer.createTransport({
+                   service: "gmail",
+                   auth: {
+                     user: "emeeylanr04@gmail.com",
+                     pass: process.env.EmailPass,
+                   },
+                 });
+
+                 var mailOptions = {
+                   from: "",
+                   to: admin.adminEmail,
+                   subject: "User Verification",
+                   text: "That was easy!",
+                   html: `<div
+      style="
+        width: 400px;
+        margin: 0 auto;
+        background-color: #f9f9fb;
+        padding: 20px;
+        height: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div>
+        <p style="text-align: center; color: #757575; font-family: cursive;">
+          Click on the button below to verify your email
+        </p>
+        <div
+          style="
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+          "
+        >
+          <button
+            style="
+              border: none;
+              background: #03a26c;
+              border-radius: 10px;
+              padding: 15px 60px;
+            "
+          >
+            <a
+              href="http://localhost:3000/${jwtCode}"
+              style="color: white; text-decoration: none; font-family: cursive;" 
+              >Verify</a
+            >
+          </button>
+        </div>
+      </div>
+    </div>`,
+                 };
+
+                 transporter.sendMail(mailOptions, function (error, info) {
+                   if (error) {
+                     res.send({
+                       mailStatus: false,
+                       message: "an error occured",
+                     });
+                   } else {
+                     res.send({ mailStatus: true });
+                   }
+                 });
+              }
+            } else {
+              res.send({message:"Invalid password", status:false})
+            }
+          }
+        
+      })
+      } else {
+        console.log("invalid login")
+        res.send({message:"invalid login details", status:false})
+      }
+   }
+ });
+  
+}
+
+
+const adminDasboard = (req, res) => {
+  let adminId = req.headers.authorization.split(" ")
+
+  jwt.verify(adminId[1], process.env.Secret, (err, result) => {
+    if (err) {
+      res.send({message:"an error occured", status:false})
+    } else {
+      adminModel.findById({ _id: result.userId }, (err, admin) => {
+        if (err) {
+          res.send({message:"an error occured", status:false})
+        } else {
+          res.send({message:"success", status:true, adminDetails:admin})
+        }
+      })
+    }
+  })
+}
+
+
+// /quiz creation
+
+const createQuiz = (req, res) => {
+  quizModel.find({ _id: req.body.adminId }, (err, result) => {
+    const currentClassQuiz = result.filter((content, id) => content.class === req.body.class)
+    const checkifSubjectNameExist = currentClassQuiz.filter((content, id) => content.quizName === req.body.quizName)
+    
+    if (checkifSubjectNameExist.length > 0) {
+      res.send({message:"Subject name exist", status:false})
+    } else {
+      let saveNewQuiz = new quizModel(req.body)
+      saveNewQuiz.save((err, result) => {
+        if (err) {
+          res.send({message:"unable to create quiz", status:false})
+        } else {
+          res.send({message:"created succesfully", status:true})
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   adminSignUp,
   emailVerification,
+  login,
+  adminDasboard
 };

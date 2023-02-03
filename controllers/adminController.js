@@ -2,6 +2,8 @@ const adminModel = require("../models/adminModel");
 const nodemailer = require("nodemailer");
 const quizModel = require("../models/QuizQuestionModel")
 const jwt = require("jsonwebtoken");
+var ID = require("nodejs-unique-numeric-id-generator")
+var generator = require("generate-password")
 const falseStatus = false;
 const trueStatus = true;
 const adminSignUp = (req, res) => {
@@ -283,22 +285,52 @@ const adminDasboard = (req, res) => {
 // /quiz creation
 
 const createQuiz = (req, res) => {
-  quizModel.find({ _id: req.body.adminId }, (err, result) => {
-    const currentClassQuiz = result.filter((content, id) => content.class === req.body.class)
-    const checkifSubjectNameExist = currentClassQuiz.filter((content, id) => content.quizName === req.body.quizName)
+  quizModel.find({adminId: req.body.quizSchema.adminId }, (err, result) => {
+    console.log(result)
+    if (err) {
+      res.send({message:"an error occured", status:false})
+    } else {
+      const currentClassQuiz = result.filter((content, id) => content.class === req.body.quizSchema.class)
+      console.log(currentClassQuiz)
+      const checkifSubjectNameExist = currentClassQuiz.filter((content, id) => content.quizName.toUpperCase() === req.body.quizSchema.quizName.toUpperCase())
+     
     
     if (checkifSubjectNameExist.length > 0) {
-      res.send({message:"Subject name exist", status:false})
+      res.send({message:"Subject name already exist", status:false})
     } else {
-      let saveNewQuiz = new quizModel(req.body)
+      req.body.quizSchema.quizId = ID.generate(new Date().toJSON()); 
+      console.log(req.body.quizSchema);
+      let passwordMutiple = generator.generateMultiple(req.body.numberToBeGenerated,{
+        length: 6,
+        upperCase: false,
+        numbers:true,
+      })
+      let singlePassword = generator.generate({
+        length: 6,
+        uppercase:true,
+        numbers:true
+      })
+      console.log(passwordMutiple)
+      if (req.body.multiple) {
+        req.body.quizSchema.quizMultiplePassword = passwordMutiple
+      } else {
+        req.body.quizSchema.quizPin = singlePassword
+
+      }
+      const jwtClassIdentification = jwt.sign({class:req.body.quizSchema.class, adminId:req.body.quizSchema.adminId}, process.env.Secret,{expiresIn:"1d"})
+      let saveNewQuiz = new quizModel(req.body.quizSchema)
       saveNewQuiz.save((err, result) => {
         if (err) {
+          console.log(err)
           res.send({message:"unable to create quiz", status:false})
         } else {
-          res.send({message:"created succesfully", status:true})
+          res.send({message:"created succesfully", status:true, classId:jwtClassIdentification})
         }
       })
     }
+      
+    }
+   
   })
 }
 
@@ -306,5 +338,8 @@ module.exports = {
   adminSignUp,
   emailVerification,
   login,
-  adminDasboard
+  adminDasboard,
+
+  // quiz creation
+  createQuiz,
 };

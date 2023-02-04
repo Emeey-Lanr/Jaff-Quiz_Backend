@@ -3,7 +3,7 @@ const quizSchema = mongoose.Schema({
   adminId: { type: String },
   class: { type: String },
   quizName: { type: String },
-  quizPin: { type: String, unique: true },
+  quizPin: { type: String},
   quizId: { type: String, unique: true },
   quizSubject: { type: Array },
   subjectToBePlayedByPlyers: { type: Array },

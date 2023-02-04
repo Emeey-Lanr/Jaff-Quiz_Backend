@@ -290,8 +290,9 @@ const createQuiz = (req, res) => {
     if (err) {
       res.send({message:"an error occured", status:false})
     } else {
+      
       const currentClassQuiz = result.filter((content, id) => content.class === req.body.quizSchema.class)
-      console.log(currentClassQuiz)
+      
       const checkifSubjectNameExist = currentClassQuiz.filter((content, id) => content.quizName.toUpperCase() === req.body.quizSchema.quizName.toUpperCase())
      
     
@@ -317,7 +318,7 @@ const createQuiz = (req, res) => {
         req.body.quizSchema.quizPin = singlePassword
 
       }
-      const jwtClassIdentification = jwt.sign({class:req.body.quizSchema.class, adminId:req.body.quizSchema.adminId}, process.env.Secret,{expiresIn:"1d"})
+      const jwtClassIdentification = jwt.sign({class:req.body.quizSchema.class, adminId:req.body.quizSchema.adminId}, process.env.Secret,{expiresIn:"7d"})
       let saveNewQuiz = new quizModel(req.body.quizSchema)
       saveNewQuiz.save((err, result) => {
         if (err) {
@@ -334,6 +335,71 @@ const createQuiz = (req, res) => {
   })
 }
 
+const viewQuiz = (req, res) => {
+  let quizId = jwt.sign({ class: req.body.class, adminId: req.body.adminId }, process.env.secret, { expiresIn: "7d" })
+  res.send({status:true, identification:quizId})
+  
+}
+
+const loadQuizCollection = (req, res) => {
+  let idverification = req.headers.authorization.split(" ")[1]
+  jwt.verify(idverification, process.env.Secret, (err, result) => {
+    if (err) {
+      res.send({message:"jwt malformed", status:false})
+    } else {
+      quizModel.find({ adminId: result.adminId }, (err, collection) => {
+        if (err) {
+          res.send({message:"an error ocurred", status:false})
+        } else {
+          const currentClassCollection = collection.filter((content) => content.class === result.class)
+          res.send({message:"success", status:true, collections:currentClassCollection, class:result.class})
+        }
+      })
+    }
+  })
+
+}
+
+const deleteSpecificQuizCollection = (req, res) => {
+  console.log(req.body)
+  quizModel.findByIdAndDelete({ _id: req.body.quizId }, (err) => {
+    if (err) {
+      res.send({message:"an error ocurred, unbale to delete", status:false})
+    } else {
+      res.send({message:"deleted successfully", status:true})
+    }
+  })
+
+}
+
+const generateTokenForQuiz = (req, res) => {
+  const quizId = jwt.sign({ quizDataBaseId: req.body.quizDbId }, process.env.Secret, {expiresIn:"7d"});
+  res.send({status:true, quizId:quizId})
+
+}
+
+const getSpecificQuiz = (req, res) => {
+  let incomingToken = req.headers.authorization.split(" ")[1]
+  jwt.verify(incomingToken, process.env.Secret, (err, token) => {
+    if (err) {
+      res.send({message:"jwt malwared", status:false})
+    } else {
+      quizModel.findOne({ _id: token.quizDataBaseId }, (err, result) => {
+        if (err) {
+          res.send({message:"an error ocurred", status:false})
+        } else {
+          res.send({message:"success", status:true, currentQuiz:result})
+        }
+      });
+    }
+  })
+}
+
+
+const addQuestion = () => {
+  
+}
+
 module.exports = {
   adminSignUp,
   emailVerification,
@@ -342,4 +408,10 @@ module.exports = {
 
   // quiz creation
   createQuiz,
+  viewQuiz,
+  loadQuizCollection,
+  deleteSpecificQuizCollection,
+  generateTokenForQuiz,
+  getSpecificQuiz,
+  addQuestion
 };

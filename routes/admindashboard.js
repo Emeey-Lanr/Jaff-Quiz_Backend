@@ -13,6 +13,7 @@ const {
   deleteSpecificQuizCollection,
   generateTokenForQuiz,
   getSpecificQuiz,
+  uploadImageForQuiz,
   addQuestion,
 } = require("../controllers/adminController");
 
@@ -28,6 +29,7 @@ route.get("/loadcollections", loadQuizCollection)
 route.post("/deleteCollection", deleteSpecificQuizCollection)
 route.post("/generateQuizSpecificToken", generateTokenForQuiz)
 route.get("/getSpecificQuiz", getSpecificQuiz)
+route.post("/uploadImgForQuiz", uploadImageForQuiz);
 route.post("/addSpecificQuestion",addQuestion)
 
 module.exports = route;

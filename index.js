@@ -26,24 +26,40 @@ app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 app.use(cors());
 app.use(express.json({ limit: "500mb" }));
 const adminRoute = require("./routes/admindashboard");
-const game = require("./routes/GameRoute")
+const game = require("./routes/GameRoute");
 app.use("/admin", adminRoute);
-app.use("/game", game)
-const userid = [];
+app.use("/game", game);
+const room = ["English", "Maths", "Physics"];
 
 io.on("connection", (socket) => {
   socket.emit("clientId", { clientId: socket.id });
-  socket.on("saveUser", (data) => {
-    userid.push(data);
-    console.log(userid);
+  // socket.on("join", (data) => {
+
+  // })
+  socket.on("userId", (data) => {
+    let check = room.filter((ui, id) => ui === data.name);
+    // console.log(check.length);
+    if (check.length > 0) {
+      socket.join(data.name);
+      socket.to(data.id).emit("ifExist", { message: "room", status: false });
+    } else {
+      console.log("room doesnt exist");
+      socket
+        .to(data.id)
+        .emit("ifExist", { message: "room doesn't exist", status: true });
+    }
   });
 
-  socket.on("playing", (pass) => {
-    console.log(pass);
-    // userid.map((ui, ud) => {
-      socket.broadcast.emit("message", pass);
-    // });
+  socket.on("messageRoom", (data) => {
+    socket.to(data.roomName).emit("message", { message: data.comingMessage });
   });
+
+  // socket.on("playing", (pass) => {
+  //   console.log(pass);
+  //   // userid.map((ui, ud) => {
+  //     socket.broadcast.emit("message", pass);
+  //   // });
+  // });
 
   socket.on("disconnect", () => {
     console.log("a userhas disconnected");

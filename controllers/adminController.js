@@ -449,14 +449,15 @@ const getSpecificQuiz = (req, res) => {
 
 const uploadImageForQuiz = (req, res) => {
   console.log(req.body)
-  const imageUpload = cloudinary.uploader.upload(req.body.imageURL, {
+  const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
     public_id: "olympic_flag",
   });
 
   imageUpload
     .then((data) => {
       console.log(data);
-      console.log(data.secure_url);
+      console.log();
+      res.send({status:true, imgUrl:data.secure_url})
     })
     .catch((err) => {
       if (err) {

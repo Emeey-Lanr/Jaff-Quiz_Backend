@@ -93,6 +93,9 @@ const adminGameLogin = (req, res) => {
                           res.send({
                             message: "valid login",
                             status: true,
+                            // this is used to kno if the admin is logged in if the admin is logged in 
+                            // then players should be able to if not players shouldn't be able to
+                           checkifAdminLogin: details.quizIdNumberPlayed,
                             adminStatusId: adminCode,
                           });
                         }
@@ -115,13 +118,42 @@ const adminGameLogin = (req, res) => {
 };
 
 const userGamePinVerification = (req, res) => {
-  quizModel.findOne(
+quizModel.findOne(
     { quizMultiplePassword: req.body.password },
     (err, result) => {
       if (err) {
         res.send({ message: "an error occured", status: false });
       } else {
         if (result !== null) {
+          playerModel.find({ quizId: result._id }, (err, gameCreated) => {
+            if (err) {
+              res.send({message:"an error occured",status:false})
+            } else {
+              if (gameCreated.length > 0) {
+              
+                 const userpin = jwtId.sign(
+                   {
+                     adminStatus: false,
+                     quizID: result._id,
+                     adminId: result.adminId,
+                     subjectToBeDone: result.subjectToBePlayedByPlyers,
+                   },
+                   process.env.GS,
+                   { expiresIn: "1d" }
+                 );
+                 res.send({
+                   message: "success",
+                   passId: userpin,
+                   status: true,
+                   lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
+                 });
+                
+              } else {
+                res.send({message:"quiz can't  be accessed", status:false})
+              }
+            }
+          });
+
           // if (result.multiple) {
           //   let usedPin = result.quizMultiplePassword.filter((pass, id) => pass === req.body.password)
           //   let notusedPin = result.quizMultiplePassword.filter((pass, id) => pass !== req.body.password)
@@ -133,17 +165,7 @@ const userGamePinVerification = (req, res) => {
           //     }
           //   })
           // }
-          const userpin = jwtId.sign(
-            {
-              adminStatus: false,
-              quizID: result._id,
-              adminId: result.adminId,
-              subjectToBeDone: result.subjectToBePlayedByPlyers,
-            },
-            process.env.GS,
-            { expiresIn: "1d" }
-          );
-          res.send({ message: "success", passId: userpin, status: true });
+         
         } else {
           res.send({ message: "Invalid Pin", status: false });
         }
@@ -213,7 +235,7 @@ const savePlayerDetails = (req, res) => {
                           playerInfo: req.body,
                         },
                         process.env.GS,
-                        { expiresIn: "1d" }
+                        { expiresIn: "7d" }
                       );
                       res.send({ status: true, playerToken: playerToken });
                   }

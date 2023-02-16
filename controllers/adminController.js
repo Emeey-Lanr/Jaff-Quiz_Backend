@@ -478,13 +478,13 @@ const addQuestion = (req, res) => {
         } else if (1 > 0) {
           console.log(0);
         }
-        if (
-          req.body.time.hour > 0 ||
-          req.body.time.minutes > 0 ||
-          req.body.time.seconds > 0
-        ) {
+        // if (
+        //   req.body.time.hour > 0 ||
+        //   req.body.time.minutes > 0 ||
+        //   req.body.time.seconds > 0
+        // ) {
           result.quizSubject[req.body.subjectId].time = req.body.time;
-        }
+        // }
 
         if (req.body.assignedMark > 1 && req.body.assignedMark !== 1) {
           result.quizSubject[req.body.subjectId].subjectMark =

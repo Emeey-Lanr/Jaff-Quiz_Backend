@@ -1,6 +1,7 @@
 const adminModel = require("../models/adminModel");
 const nodemailer = require("nodemailer");
 const quizModel = require("../models/QuizQuestionModel");
+const playerModel = require("../models/Playersmodel")
 const jwt = require("jsonwebtoken");
 var ID = require("nodejs-unique-numeric-id-generator");
 var generator = require("generate-password");
@@ -298,7 +299,21 @@ const adminDasboard = (req, res) => {
         if (err) {
           res.send({ message: "an error occured", status: false });
         } else {
-          res.send({ message: "success", status: true, adminDetails: admin });
+        
+          playerModel.find({ adminId: admin._id }, (err, quiz) => {
+            if (err) {
+              res.send({message:"an error occured", status:false})
+            } else {
+              console.log(quiz)
+              if (quiz.length > 0) {
+                let rightOrder = quiz[quiz.length - 1].result.sort((a, b)=>a.totalScore - b.totalScore).reverse()
+                res.send({ message: "success", status: true, adminDetails: admin, lastQuizheld:rightOrder});
+              } else {
+                res.send({ message: "success", status: true, adminDetails: admin, lastQuizheld:quiz[quiz.length-1] });
+              }
+            }
+          });
+          
         }
       });
     }
@@ -515,6 +530,29 @@ const addQuestion = (req, res) => {
   });
 };
 
+
+
+// checkParticipants
+const checkParticiPants = (req, res) => {
+  let userToken = req.headers.authorization.split(" ")[1]
+  console.log(userToken)
+  jwt.verify(userToken, process.env.Secret, (err, result) => {
+    if (err) {
+      res.send({status:false})
+    } else {
+      console.log()
+      playerModel.find({ quizId: result.quizDataBaseId }, (err, quizResult) => {
+        if (err) {
+          res.send({message:"an error occured", status:false})
+        } else {
+          console.log(quizResult)
+        }
+      });
+    }
+  })
+  
+}
+
 module.exports = {
   adminSignUp,
   emailVerification,
@@ -530,4 +568,5 @@ module.exports = {
   getSpecificQuiz,
   uploadImageForQuiz,
   addQuestion,
+  checkParticiPants
 };

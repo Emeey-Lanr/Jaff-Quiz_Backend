@@ -15,6 +15,7 @@ const {
   getSpecificQuiz,
   uploadImageForQuiz,
   addQuestion,
+  checkParticiPants
 } = require("../controllers/adminController");
 
 route.post("/signup", adminSignUp);
@@ -31,5 +32,6 @@ route.post("/generateQuizSpecificToken", generateTokenForQuiz)
 route.get("/getSpecificQuiz", getSpecificQuiz)
 route.post("/uploadImgForQuiz", uploadImageForQuiz);
 route.post("/addSpecificQuestion",addQuestion)
+route.get("/findParticipants", checkParticiPants)
 
 module.exports = route;

@@ -45,6 +45,7 @@ const adminGameLogin = (req, res) => {
                     // this is used to check the number of times the game is being played
                     quizIdNumberPlayed: theParticularQuiz[0]._id + 1,
                     players: [],
+                    result:[],
                   };
                   let turnTo = 0
                   if (err) {
@@ -84,6 +85,7 @@ const adminGameLogin = (req, res) => {
                               question: theParticularQuiz[0].quizSubject,
                               quizID: theParticularQuiz[0]._id,
                               quizIdNumberPlayed: details.quizIdNumberPlayed,
+                              mode:req.body.mode
                             },
                             process.env.GS,
                             {
@@ -105,6 +107,7 @@ const adminGameLogin = (req, res) => {
                 }
               );
             } else {
+              res.send({message:"Invalid quiz Id", status:false})
             }
           } else {
             res.send({ message: "Invalid Id", status: false });
@@ -222,7 +225,6 @@ const savePlayerDetails = (req, res) => {
                  res.send({message:"user name already exist", status:false})
               } else {
                 currentQuiz.players.push(req.body.playerName)
-
                 playerModel.findByIdAndUpdate({ _id: currentGame._id }, currentQuiz, (err) => {
                   if (err) {
                     res.send({message:"an error occured", status:false})
@@ -266,7 +268,8 @@ const verifyAdminStatus = (req, res) => {
           adminStatus: result.adminStatus,
           questionToBeAnswered: result.question,
           quizID: result.quizID,
-          quizIdNumberPlayedId:result.quizIdNumberPlayed,
+          quizIdNumberPlayedId: result.quizIdNumberPlayed,
+          mode:result.mode
         });
       } else {
         res.send({

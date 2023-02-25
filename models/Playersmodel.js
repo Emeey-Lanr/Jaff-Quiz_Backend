@@ -3,7 +3,8 @@ const playerSchema = mongoose.Schema({
     adminId:{type:String},
     quizId: { type: String },
     quizIdNumberPlayed:{type:String},
-    players:{type:Array},
+    players: { type: Array },
+    result:{type:Array}
     
 })
 

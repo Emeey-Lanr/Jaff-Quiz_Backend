@@ -307,7 +307,12 @@ const adminDasboard = (req, res) => {
               console.log(quiz)
               if (quiz.length > 0) {
                 let rightOrder = quiz[quiz.length - 1].result.sort((a, b)=>a.totalScore - b.totalScore).reverse()
-                res.send({ message: "success", status: true, adminDetails: admin, lastQuizheld:rightOrder});
+                res.send({
+                  message: "success", status: true,
+                  adminDetails: admin,
+                  quizdDetails: quiz,
+                  lastQuizheld: rightOrder
+                });
               } else {
                 res.send({ message: "success", status: true, adminDetails: admin, lastQuizheld:quiz[quiz.length-1] });
               }
@@ -320,6 +325,38 @@ const adminDasboard = (req, res) => {
   });
 };
 
+// Upload Setting Image
+const uploadSettingImage = (req, res)=>{
+   const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
+     public_id: "adminImage_img",
+   });
+
+   imageUpload
+     .then((data) => {
+      //  res.send({ status: true, imgUrl: data.secure_url });
+       adminModel.findOne({ _id: req.body.adminId }, (err, result) => {
+         if (err) {
+           res.send({message:"an error occured", status:false})
+         } else {
+           result.adminImg = data.secure_url
+           adminModel.findByIdAndUpdate({ _id: req.body.adminId }, result, (err) => {
+             if (err) {
+               res.send({message:"an error occured", status:false})
+             } else {
+               res.send({message:"uploaded succesfully", status:true})
+             }
+           })
+         }
+       })
+     })
+     .catch((err) => {
+       if (err) {
+         cosole.log(err);
+         res.send({ status: false, message: "An error ocurred" });
+       }
+     });
+
+}
 // /quiz creation
 
 const createQuiz = (req, res) => {
@@ -540,12 +577,12 @@ const checkParticiPants = (req, res) => {
     if (err) {
       res.send({status:false})
     } else {
-      console.log()
       playerModel.find({ quizId: result.quizDataBaseId }, (err, quizResult) => {
         if (err) {
           res.send({message:"an error occured", status:false})
         } else {
-          console.log(quizResult)
+          res.send({message:"succesful", status:true, result:quizResult})
+          // console.log(quizResult)
         }
       });
     }
@@ -558,7 +595,7 @@ module.exports = {
   emailVerification,
   login,
   adminDasboard,
-
+uploadSettingImage,
   // quiz creation
   createQuiz,
   viewQuiz,

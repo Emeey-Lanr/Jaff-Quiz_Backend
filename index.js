@@ -27,8 +27,10 @@ app.use(cors());
 app.use(express.json({ limit: "500mb" }));
 const adminRoute = require("./routes/admindashboard");
 const game = require("./routes/GameRoute");
+const searchRoute = require("./routes/SearchResultRoute")
 app.use("/admin", adminRoute);
 app.use("/game", game);
+app.use("/search", searchRoute )
 
 const playerModel = require("./models/Playersmodel")
 const adminLoggedIn =  []
@@ -104,19 +106,68 @@ io.on("connection", (socket) => {
       }
       
     } else {
-      let playerPlayinSchema = {
-        currentGameIndex: 0,
-        adminPage: uniqueId.adminPage,
-        uniqueId: uniqueId.quizId,
-        currentSubjectName: "",
-        totalCurrentSubject:[],
-        currentAssignedMark: 1,
-        allQuizIndex: -1,
-        clicked: -1,
-        currenTime:0,
-        gameStatus:[],
-        players:[]
-      }
+      let date = new Date
+      let playerPlayinSchema = {}
+      if (uniqueId.mode === 1) {
+         playerPlayinSchema = {
+           currentGameIndex: 0,
+           adminPage: uniqueId.adminPage,
+           uniqueId: uniqueId.quizId,
+           mode: uniqueId.mode,
+           currentSubjectName: "",
+           totalCurrentSubject: [],
+           currentAssignedMark: 1,
+           allQuizIndex: -1,
+           clicked: -1,
+           currentTime: 0,
+           gameStatus: [],
+           players: [],
+           submitted: [],
+           month: Number(String(uniqueId.date).split("-")[1]),
+           year: Number(String(uniqueId.date).split("-")[0]),
+           day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
+         };
+      } else if (uniqueId.mode === 2) {
+        playerPlayinSchema = {
+          currentGameIndex: 0,
+          adminPage: uniqueId.adminPage,
+          uniqueId: uniqueId.quizId,
+          mode: uniqueId.mode,
+          currentSubjectName: "",
+          totalCurrentSubject: [],
+          currentAssignedMark: 1,
+          allQuizIndex: -1,
+          clicked: -1,
+          currenTime: 0,
+          gameStatus: [],
+          players: [],
+          month: Number(String(uniqueId.date).split("-")[1]),
+          year: Number(String(uniqueId.date).split("-")[0]),
+          day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
+        };
+      } else if (uniqueId.mode === 3) {
+        playerPlayinSchema = {
+          currentGameIndex: 0,
+          adminPage: uniqueId.adminPage,
+          uniqueId: uniqueId.quizId,
+          mode: uniqueId.mode,
+          currentSubjectName: "",
+          totalCurrentSubject: [],
+          currentAssignedMark: 1,
+          allQuizIndex: -1,
+          currentTime: 0,
+          gameStatus: [],
+          players: [],
+          currentQuestion: [],
+          submitted:[],
+          month: Number(String(uniqueId.date).split("-")[1]),
+          year: Number(String(uniqueId.date).split("-")[0]),
+          day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
+        };
+        console.log()
+        
+     }
+    
       playerPlayingDetail.push(playerPlayinSchema)
       socket.join(uniqueId.quizId)
       console.log(playerPlayingDetail)
@@ -155,7 +206,219 @@ io.on("connection", (socket) => {
 
   });
 
-  // start of game
+  // Stage 1
+  socket.on("adminModeStart", (data) => {
+    const check = playerPlayingDetail.filter((content) => content.uniqueId === data.identification)
+   
+    if (check.length > 0) {
+       const gameStatus = check[0].gameStatus.filter(
+         (status) => status.name === data.currentSubjectName
+       );
+
+      const addInfoFunction = () => {
+         playerPlayingDetail.map((content) => {
+           if (content.uniqueId === data.identification) {
+             content.currentGameIndex = 0
+               content.adminPage = data.adminPage
+               content.currentSubjectName = data.currentSubjectName
+               content.totalCurrentSubject = data.currentQuestion
+               content.currentAssignedMark = data.assignedMark
+             if (content.allQuizIndex === -1) {
+                 content.allQuizIndex = data.allQuestionLength - 1
+             }
+             if (gameStatus.length > 0) {
+               console.log("subject alreday exist")
+             } else {
+               content.gameStatus.push({ name: data.currentSubjectName , status:false});
+             }
+             content.players.map((players) => {
+               players.subjectToBeDone.map((subject) => {
+                 if (subject.quizName === data.currentSubjectName) {
+                   data.currentQuestion.map(() => {
+                    subject.questions.push(0)
+                  })
+                }
+               })
+             })
+             
+           }
+       
+         });
+        console.log(check[0], "this is mode 1")
+        const questionToBeAnsweredFunction = () => {
+          return {
+            currentQuestion:
+              check[0].totalCurrentSubject[check[0].currentGameIndex],
+            roomId: check[0].uniqueId,
+            answersStatus: false,
+            currentSubject: check[0].currentSubjectName,
+            assignedMark: check[0].currentAssignedMark,
+            adminStage:check[0].adminPage,
+            mode:check[0].mode,
+            currentGameIndex:check[0].currentGameIndex
+          };
+        }
+   
+        
+         io.sockets.to(check[0].uniqueId).emit("openQuestionAdminMode1", questionToBeAnsweredFunction());
+        socket.to(check[0].uniqueId).emit("openQuestionAdminMode1Players", questionToBeAnsweredFunction())
+       
+      }
+      if (gameStatus.length > 0) {
+        if (gameStatus[0].status) {
+          io.sockets.to(check[0].uniId).emit("alreadyPlayed", {
+            roomId:check[0].uniqueId
+          })
+        } else {
+          addInfoFunction()
+        }
+      } else {
+        addInfoFunction()
+      }
+     
+    }
+
+  })
+  socket.on("emitTimeAndEnabledButton", (data)=>{
+      const check = playerPlayingDetail.filter((content) => content.uniqueId === data.roomId)
+   if(check.length >0){
+     playerPlayingDetail.map((content) => {
+       if (content.uniqueId === data.roomId) {
+        content.currentTime = data.currentTime
+      }
+     })
+      io.sockets.to(check[0].uniqueId).emit("quizMode1Time", 
+        {
+          time:check[0].currentTime,
+          roomId:check[0].uniqueId,
+          mark:check[0].currentAssignedMark
+        
+        }
+     );
+
+        
+   }
+
+  })
+
+  socket.on("mode1SubmitQuestion", (data) => {
+ io.sockets.to(data.roomId).emit("collectAnswer", {roomId:data.roomId})
+
+     
+  })
+
+  socket.on("submittedAnswer", (data)=>{
+
+    if (data.currentSubject !== "" && data.name !== "" && data.roomId !== "" && data.score !== -1) {
+      console.log(data)
+      let check = playerPlayingDetail.filter((content, id) => content.uniqueId === data.roomId)
+      // let currentScore = 
+let subjectDoneIdentification = 0
+      if (check.length > 0) {
+        playerPlayingDetail.map((content) => {
+          if (content.uniqueId === data.roomId) {
+            content.players.map((player) => {
+              if (player.playerName === data.name) {
+               
+                player.subjectToBeDone.map((subject,id) => {
+                  if (subject.quizName === data.currentSubject) {
+                     subjectDoneIdentification = id
+                    subject.questions[content.currentGameIndex] = data.score
+                     
+                  }
+                 
+                })
+                
+              }
+            })
+          }
+        })
+
+        io.sockets.to(check[0].uniqueId).emit("showAdminMode1CurrentScore", {
+          roomId:check[0].uniqueId,
+          subjectDoneIdentification: subjectDoneIdentification,
+          scoreIndex: check[0].currentGameIndex,
+          players:check[0].players,
+          currentSubject:data.currentSubject
+        })
+        
+      }
+       
+     }
+  })
+
+
+  socket.on("changedToNextQuestionOrSubjectOverallAdminMode1", (data) => {
+     const check = playerPlayingDetail.filter((content, id) => content.uniqueId === data.roomId)
+    if (check.length > 0) {
+      if (check[0].totalCurrentSubject.length - 1 === check[0].currentGameIndex) {
+        let ranking = []
+        let identi = 0
+        playerPlayingDetail.map((content) => {
+          if (content.uniqueId === data.roomId) {
+            content.adminPage = "AdminPage03";
+            content.gameStatus.map((state) => {
+              if (state.name === check[0].currentSubjectName) {
+                state.status = true
+              }
+            })
+            content.players.map((player)=>{
+              player.subjectToBeDone.map((subject, id) => {
+                if (subject.quizName === check[0].currentSubjectName) {
+                  identi = id
+                  subject.score = 0
+                  subject.questions.map((score) => {
+                    console.log(score, "this is your score")
+                    subject.score += Number(score)
+                    
+                  })
+                 ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score)
+                    
+                }
+                
+               })
+            })
+          }
+        })
+        
+        io.sockets.to(check[0].uniqueId).emit("adminMode1SubjectOverall", {
+          roomId: check[0].uniqueId,
+          ranking: ranking.reverse(),
+          index: identi,
+          subject: check[0].currentSubjectName,
+          adminStage:check[0].adminPage
+        })
+
+       
+      } else {
+        playerPlayingDetail.map((content) => {
+          if (content.uniqueId === data.roomId) {
+             content.adminPage = "AdminPage02"
+            content.currentGameIndex = content.currentGameIndex + 1
+          }
+        })
+         const questionToBeAnsweredFunction = () => {
+          return {
+            currentQuestion:
+              check[0].totalCurrentSubject[check[0].currentGameIndex],
+            roomId: check[0].uniqueId,
+            answersStatus: false,
+            currentSubject: check[0].currentSubjectName,
+            assignedMark: check[0].currentAssignedMark,
+            adminStage:check[0].adminPage,
+            mode:check[0].mode,
+            currentGameIndex:check[0].currentGameIndex
+          };
+        }
+        
+        socket.to(check[0].uniqueId).emit("changeQuestionAdminMode1Players", questionToBeAnsweredFunction())
+        io.sockets.to(check[0].uniqueId).emit("changeQuestionAdminMode1Admin", questionToBeAnsweredFunction())
+        
+     }
+   }
+  })
+ 
+  // Stage 2
   socket.on("switchToLoad", (load)=>{
      
     socket.to(load.roomId).emit("LoadingPage", { adminPage: load.adminPage, loading:true });
@@ -368,7 +631,7 @@ io.on("connection", (socket) => {
              if (content.uniqueId === data.gameId) {
                content.adminPage = "AdminPage04"
                content.players.map((players, id) => {
-                // players.totalScore;
+                  
                  players.subjectToBeDone.map((scores, id) => {
                    players.totalScore += scores.score; 
                  })
@@ -409,7 +672,10 @@ io.on("connection", (socket) => {
               } else {
                 if (quiz !== null) {
                   
-                    quiz.result = check[0].players
+                  quiz.result = check[0].players
+                  quiz.month = check[0].month
+                  quiz.year = check[0].year
+                 quiz.day = check[0].day
                   console.log(quiz.result);
                   // quiz.result = check[0].players;
                   playerModel.findOneAndUpdate( { quizIdNumberPlayed: check[0].uniqueId }, quiz,(err) => {
@@ -445,7 +711,227 @@ io.on("connection", (socket) => {
     }
    
   saveResult()
-})
+  })
+
+
+  // Stage 3
+  // self Place
+  socket.on("startSelfMode", (data) => {
+    console.log(data)
+    const check = playerPlayingDetail.filter((content) => content.uniqueId === data.roomId)
+    console.log(check)
+    const ifSubjectIsDone = check[0].gameStatus.filter((subjectName)=> subjectName.name === data.currentSubjectName)
+    const subjectStatus = { name: data.currentSubjectName, status: false }
+    
+    console.log(ifSubjectIsDone)
+
+ let currentSubject = data.allSubjects.filter((content) => content.quizName === data.currentSubjectName)
+      const checkSubmitted = check[0].submitted.filter((subject)=>subject.subjectName === data.currentSubjectName)
+      console.log(currentSubject)
+      let scoreBox = []
+      let subjectMark = 1
+    const updateFunction = () => {
+     
+       playerPlayingDetail.map((content, id) => {
+          if (content.uniqueId === data.roomId) {
+            content.currentSubjectName = data.currentSubjectName
+            content.allQuizIndex = data.allSubjects.length - 1
+            content.adminPage = "AdminPage02";
+            content.currenTime = data.time
+            content.currentQuestion = data.question
+            if(check[0].totalCurrentSubject.length < 1){
+             content.totalCurrentSubject = data.allTotalSubject
+            }
+            content.currentAssignedMark = currentSubject[0].subjectMark
+            content.gameStatus.push(subjectStatus);
+            if (checkSubmitted.length > 0) {
+              console.log("subject exist")
+            } else {
+              console.log("subject submission done")
+              content.submitted.push({
+                subjectName: data.currentSubjectName,
+                submitted: [],
+              });
+            }
+            content.players.map((player, id) => {
+               player.subjectToBeDone.map((subject)=>{
+                // console.log(subject)
+                 if (subject.quizName === data.currentSubjectName) {
+                   data.question.map((question, id) => {
+                     subject.questions.push(0)
+                   })
+                   subjectMark = subject.subjectMark
+                   scoreBox = subject.questions
+                 }
+               })
+            })
+          }
+       });
+      console.log(check[0], "this is the data")
+        socket.to(check[0].uniqueId).emit("stage3Question", {
+          question: check[0].currentQuestion,
+          subjectName: check[0].currentSubjectName,
+          scoreBox: scoreBox,
+          time: check[0].currenTime,
+          adminPage:check[0].adminPage,
+          subjectMark: check[0].currentAssignedMark,
+          mode:check[0].mode
+          
+        });
+      io.sockets.to(check[0].uniqueId).emit("stage3AdminQuestion", {
+        time: check[0].currenTime,
+        adminId: check[0].uniqueId,
+        adminPage:check[0].adminPage
+      })
+      
+        // console.log(check[0].currentQuestion, check[0].currentSubjectName,scoreBox, check[0].currenTime)
+    }
+  // this checks if the subject has been answered before so it won't be used again after been answerd
+    if (ifSubjectIsDone.length > 0) {
+      if (ifSubjectIsDone[0].status) {
+        console.log("play")
+        io.to(data.socketId).emit("youcant", {message:"Done, can't play again"});
+      } else {
+       updateFunction() 
+      }
+     
+    } else {
+      updateFunction()
+    }
+
+    
+  })
+
+  // submitanswer
+  socket.on("selfSubmitQuestion", (data) => {
+    // the game status should change here
+    playerPlayingDetail.map((content) => {
+      if (content.uniqueId === data.roomId) {
+        content.gameStatus.map((status) => {
+          if (status.name === content.currentSubjectName) {
+           status.status = true
+          }
+        
+       })
+     } 
+    })
+    socket.to(data.roomId).emit("collectPlayersAnswers", {roomId:data.roomId})
+  })
+  socket.on("verifyToSubmitAnswer", (data) => {
+   const check = playerPlayingDetail.filter((content)=> content.uniqueId === data.roomId)
+    if(data.username !== '' && data.currentSubject !== '' && (data.totalScore.length === check[0].currentQuestion.length) && data.roomId !== ''){
+      const comingData = data
+   console.log(data)
+      const findSubmitted = check[0].submitted.filter((subject)=> subject.subjectName === check[0].currentSubjectName) 
+      const findUser = findSubmitted[0].submitted.filter((user)=> user.name === data.username)
+      let ranking = []
+      let  identification =  0
+      if (findUser.length > 0) {
+          console.log("user have submitted already")
+           playerPlayingDetail.map((content) => {
+          if (content.uniqueId === check[0].uniqueId) {
+            content.adminPage = "AdminPage03"
+            content.players.map((player) => {
+            player.subjectToBeDone.map((subject, id) => {
+         
+             if (subject.quizName === content.currentSubjectName) {
+                 console.log(subject.score)
+                     identification = id
+                    ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score).reverse()
+                  }
+                })
+         
+          
+            })
+          }
+        })
+      } else{
+        playerPlayingDetail.map((content) => {
+          if (content.uniqueId === check[0].uniqueId) {
+            content.adminPage = "AdminPage03"
+            content.players.map((player) => {
+              if (player.playerName === data.username) {
+                player.subjectToBeDone.map((subject, id) => {
+               
+                  if (subject.quizName === content.currentSubjectName) {
+                    subject.score = 0;
+                    data.totalScore.map((score) => {
+                      subject.score += score
+                    })
+                    identification = id
+                    console.log(subject.score, player.playerName)
+                    ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score).reverse()
+                  }
+                })
+              }
+          
+            })
+          }
+        })
+  }
+  console.log(ranking, identification)
+  io.sockets.to(check[0].uniqueId).emit("stage3PreSubject", {
+    ranking:ranking,
+    roomId:check[0].uniqueId,
+    subjectId:identification,
+    adminStage:check[0].adminPage,
+    currentSubject:check[0].currentSubjectName
+  })
+
+
+    
+     
+     
+    }
+      
+
+   
+  } )
+
+  socket.on("selfSubmit",(data)=>{
+    console.log(data)
+   const check = playerPlayingDetail.filter((content)=> content.uniqueId === data.roomId)
+    const findSubmitted = check[0].submitted.filter((subject)=> subject.subjectName === check[0].currentSubjectName) 
+    const findUser = findSubmitted[0].submitted.filter((user)=> user.name === data.username)
+    
+      playerPlayingDetail.map((content) => {
+        if (content.uniqueId === check[0].uniqueId) {
+          content.adminPage = "AdminPage03"
+          content.submitted.map((submit) => {
+            if (submit.subjectName === check[0].currentSubjectName) {
+              if (findUser.length > 0) {
+                console.log("already submitted")
+              } else {
+                submit.submitted.push({name:data.username})
+                console.log("not submitted")
+              }
+            }
+          })
+          content.players.map((player) => {
+            if (player.playerName === data.username) {
+              player.subjectToBeDone.map((subject, id) => {
+               
+                if (subject.quizName === content.currentSubjectName) {
+                  subject.score = 0;
+                  data.totalScore.map((score) => {
+                    subject.score += score
+                  })
+                
+                }
+              })
+            }
+          
+          })
+        }
+      })
+      // send it to the specif user
+    io.to(data.uniqueId).emit("youveSubmitted", {
+      roomId: data.roomId,
+      message: "youv've succcesfully submited",
+    });
+    
+  })
+
   socket.on("disconnect", () => {
     console.log("a userhas disconnected");
   });

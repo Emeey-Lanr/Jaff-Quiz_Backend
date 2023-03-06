@@ -31,7 +31,7 @@ const adminGameLogin = (req, res) => {
             let theParticularQuiz = quizCollection.filter( (content) => content.quizId === req.body.gameid );
             //  we check if it exist and if id does we register the game
             if (theParticularQuiz.length > 0) {
-              console.log(theParticularQuiz);
+              console.log(theParticularQuiz, "check for it level");
 
               // we try to find the orginal game with that we  get to look at the last game created and split the
               // quizIdNumberPlayed pin it can only be played 5 times
@@ -45,7 +45,13 @@ const adminGameLogin = (req, res) => {
                     // this is used to check the number of times the game is being played
                     quizIdNumberPlayed: theParticularQuiz[0]._id + 1,
                     players: [],
-                    result:[],
+                    result: [],
+                    state: req.body.state,
+                    class:theParticularQuiz[0].class,
+                    level: "", 
+                    month:0,
+                    year: 0,
+                    day: 0,
                   };
                   let turnTo = 0
                   if (err) {
@@ -55,23 +61,15 @@ const adminGameLogin = (req, res) => {
                     // if it has
                     if (allplayed.length > 0) {
                       check = allplayed[allplayed.length - 1].quizIdNumberPlayed.split("");
-                      console.log(check[check.length - 1], "=====");
-                      if (Number(check[check.length - 1]) === 5) {
-                        status = true;
-                      } else {
-                        status = false;
                         turnTo = allplayed[0].quizId + (Number(check[check.length - 1]) + 1);
                         console.log(turnTo, "+++++++++")
                          gameRegistrationSchema.quizIdNumberPlayed = String(turnTo)
-                      }
                     } else {
 
                       status = false;
                     }
 
-                    let quizGameRegistration = new playerModel(
-                      gameRegistrationSchema
-                    );
+                    let quizGameRegistration = new playerModel(gameRegistrationSchema);
                     console.log(gameRegistrationSchema)
                     if (status) {
                       res.send({ message: "Game limit reached", staus: false });
@@ -110,7 +108,7 @@ const adminGameLogin = (req, res) => {
               res.send({message:"Invalid quiz Id", status:false})
             }
           } else {
-            res.send({ message: "Invalid Id", status: false });
+            res.send({ message: "Invalid Identification", status: false });
           }
         });
       } else {
@@ -195,8 +193,6 @@ const uploadPlayerImage = (req, res) => {
 
   imageUpload
     .then((data) => {
-      console.log(data);
-      console.log();
       res.send({ status: true, imgUrl: data.secure_url });
     })
     .catch((err) => {
@@ -208,11 +204,12 @@ const uploadPlayerImage = (req, res) => {
 };
 
 const savePlayerDetails = (req, res) => {
+  console.log(req.body)
   playerModel.find({ quizId: req.body.quizId }, (err, result) => {
     if (err) {
       res.send({message:"an error occured", status:false})
     } else {
-      if (result.length > 0 && result.length < 6) {
+      if (result.length > 0 ) {
         let currentGame = result[result.length - 1]
         // currentGame.push(req.body)
         playerModel.findOne({ quizIdNumberPlayed: currentGame.quizIdNumberPlayed }, (err, currentQuiz) => {
@@ -248,6 +245,8 @@ const savePlayerDetails = (req, res) => {
           }
         })
         
+      }else{
+        res.send({status:false, message:"Game not available"})
       }
     }
     
@@ -292,3 +291,4 @@ module.exports = {
   savePlayerDetails,
   verifyAdminStatus,
 };
+  

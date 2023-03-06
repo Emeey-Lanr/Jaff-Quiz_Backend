@@ -5,6 +5,7 @@ const {
   emailVerification,
   login,
   adminDasboard,
+  uploadSettingImage,
 
   // admin quiz creation
   createQuiz,
@@ -22,7 +23,7 @@ route.post("/signup", adminSignUp);
 route.get("/verifyEmail", emailVerification)
 route.post("/adminlogin", login)
 route.get("/admindashboard", adminDasboard)
-
+route.post("/settingImage", uploadSettingImage)
 // quiz creation
 route.post("/createquiz", createQuiz)
 route.post("/saveClassId", viewQuiz);

@@ -9,7 +9,8 @@ const quizSchema = mongoose.Schema({
   subjectToBePlayedByPlyers: { type: Array },
   multiple: { type: Boolean },
   quizMultiplePassword: { type: Array },
-  usedPassword:{type:Array}
+  usedPassword: { type: Array },
+  resultPassword:{type:String}
 });
 
 const quizModel = mongoose.model("quiz-collection", quizSchema);

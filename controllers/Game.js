@@ -4,7 +4,7 @@ const adminModel = require("../models/adminModel");
 const playerModel = require("../models/Playersmodel");
 
 const cloudinary = require("cloudinary").v2;
-
+const ShortUniqueId = require('short-unique-id')
 cloudinary.config({
   cloud_name: process.env.Cloudinary_cloud_name,
   api_key: process.env.Cloudinary_api_key,
@@ -49,6 +49,7 @@ const adminGameLogin = (req, res) => {
                     state: req.body.state,
                     class:theParticularQuiz[0].class,
                     level: "", 
+                    ranking:[],
                     month:0,
                     year: 0,
                     day: 0,
@@ -131,8 +132,33 @@ quizModel.findOne(
               res.send({message:"an error occured",status:false})
             } else {
               if (gameCreated.length > 0) {
-              
-                 const userpin = jwtId.sign(
+                if (result.multiple) {
+                  result.quizMultiplePassword =  result.quizMultiplePassword.filter((content)=>content !== req.body.password)
+                  quizModel.findOneAndUpdate({ _id: result._id }, result, (err) => {
+                    if (err) {
+                  res.send({message:"an error occured", status:false})
+                    } else {
+                       const userpin = jwtId.sign(
+                         {
+                           adminStatus: false,
+                           quizID: result._id,
+                           adminId: result.adminId,
+                           subjectToBeDone: result.subjectToBePlayedByPlyers,
+                         },
+                         process.env.GS,
+                         { expiresIn: "1d" }
+                       );
+                       res.send({
+                         message: "success",
+                         passId: userpin,
+                         status: true,
+                         lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
+                       });
+                    }
+              })
+
+              } else {
+                  const userpin = jwtId.sign(
                    {
                      adminStatus: false,
                      quizID: result._id,
@@ -147,7 +173,9 @@ quizModel.findOne(
                    passId: userpin,
                    status: true,
                    lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
-                 });
+                 }); 
+              }
+              
                 
               } else {
                 res.send({message:"quiz can't  be accessed", status:false})
@@ -155,17 +183,7 @@ quizModel.findOne(
             }
           });
 
-          // if (result.multiple) {
-          //   let usedPin = result.quizMultiplePassword.filter((pass, id) => pass === req.body.password)
-          //   let notusedPin = result.quizMultiplePassword.filter((pass, id) => pass !== req.body.password)
-          //   result.quizMultiplePassword = notusedPin
-          //   result.usedPassword.push(usedPin[0])
-          //   quizModel.findOneAndUpdate({ _id: result._id }, result, (err) => {
-          //     if (err) {
-          //       res.send({})
-          //     }
-          //   })
-          // }
+         
          
         } else {
           res.send({ message: "Invalid Pin", status: false });
@@ -187,8 +205,10 @@ const verifyPlayerPassToken = (req, res) => {
 };
 
 const uploadPlayerImage = (req, res) => {
+  const uid = new ShortUniqueId()
+  const uidWithTimestamp = uid.stamp(30)
   const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
-    public_id: "player_img",
+    public_id:uidWithTimestamp,
   });
 
   imageUpload

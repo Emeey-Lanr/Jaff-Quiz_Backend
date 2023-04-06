@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 var ID = require("nodejs-unique-numeric-id-generator");
 var generator = require("generate-password");
 const cloudinary = require("cloudinary").v2;
-
+const ShortUniqueId = require('short-unique-id')
 cloudinary.config({
   cloud_name: process.env.Cloudinary_cloud_name,
   api_key: process.env.Cloudinary_api_key,
@@ -306,15 +306,17 @@ const adminDasboard = (req, res) => {
             } else {
               console.log(quiz)
               if (quiz.length > 0) {
-                let rightOrder = quiz[quiz.length - 1].result.sort((a, b)=>a.totalScore - b.totalScore).reverse()
+                let rightOrder = quiz[quiz.length - 1].result.sort((a, b) => b.totalScore - a.totalScore)
+                let ranking = quiz[quiz.length - 1].ranking
                 res.send({
                   message: "success", status: true,
                   adminDetails: admin,
-                  quizdDetails: quiz,
-                  lastQuizheld: rightOrder
+                  quizDetails: quiz,
+                  lastQuizheld: rightOrder,
+                  ranking:ranking,
                 });
               } else {
-                res.send({ message: "success", status: true, adminDetails: admin, lastQuizheld:quiz[quiz.length-1] });
+                res.send({ message: "success", status: true, adminDetails: admin,quizDetails:{}, lastQuizheld:[], ranking:[] });
               }
             }
           });
@@ -326,9 +328,11 @@ const adminDasboard = (req, res) => {
 };
 
 // Upload Setting Image
-const uploadSettingImage = (req, res)=>{
+const uploadSettingImage = (req, res) => {
+    const uid = new ShortUniqueId();
+    const uidWithTimestamp = uid.stamp(10);
    const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
-     public_id: "adminImage_img",
+     public_id: uidWithTimestamp,
    });
 
    imageUpload
@@ -459,6 +463,131 @@ const loadQuizCollection = (req, res) => {
   });
 };
 
+const deleteQuestion = (req, res) => {
+  quizModel.find({ _id: req.body.collectionId }, (err, result) => {
+    if (err) {
+      res.send({message:"an error occured", status:false})
+    } else {
+      if (result !== null) {
+        const subject = result.quizSubject.find((subject) => subject.quizName === req.body.subjectName)
+        subject.questions = subject.questions.filter((_, id) => id !== req.body.questionId)
+        quizModel.findOneAndUpdate({ _id: req.body.collectionId }, result, (err) => {
+          if (err) {
+            res.send({message:"unable to delete", status:false})
+          } else {
+            res.send({message:" Deleted Succesfully", status:true})
+          }
+        })
+      }
+    }
+  })
+  
+}
+const editQuestion = (req, res) => {
+   quizModel.find({ _id: req.body.collectionId }, (err, result) => {
+    if (err) {
+      res.send({message:"an error occured", status:false})
+    } else {
+      if (result !== null) {
+        const subject = result.quizSubject.find((subject) => subject.quizName === req.body.subjectName)
+        subject.questions[questionId] = "";
+        quizModel.findOneAndUpdate({ _id: req.body.collectionId }, result, (err) => {
+          if (err) {
+            res.send({message:"Unable to edit", status:false})
+          } else {
+            res.send({message:"Edited Succesfully", status:true})
+          }
+        })
+      }
+    }
+  })
+}
+const generateMorePassword = (req, res) => {
+  console.log(req.body)
+  quizModel.findOne({ _id: req.body.collectionId }, (err, result) => {
+    if (err) {
+      res.send({message:"an error occured", status:false})
+    } else {
+      if (result !== null) {
+        let passwordMutiple = generator.generateMultiple(
+          req.body.numberToGenarate,
+          {
+            length: 7,
+            upperCase: false,
+            numbers: true,
+          }
+        );
+        passwordMutiple.map((pass) => {
+          result.quizMultiplePassword.push(pass)
+        })
+
+        quizModel.findOneAndUpdate({ _id: req.body.collectionId }, result, (err) => {
+          if (err) {
+            res.send({message:"unable to generate", status:false})
+          } else {
+            res.send({message:"generated succesfully", status:true})
+          }
+        })
+      }
+    }
+  })
+  
+}
+const quizAcessPassword = (req, res) => {
+  quizModel.findOne({_id:req.body.collectionId}, (err, result)=>{
+    if (err) {
+      res.send({message:"an error status", status:false})
+    } else {
+      if (result !== null) {
+        console.log(result)
+        result.locked = true
+        result.quizResultAcessPassword = req.body.pass;
+        quizModel.findOneAndUpdate({_id: req.body.collectionId }, result, (err) => {
+          if (err) {
+            console.log(err)
+            res.send({message:"an error occured", status:false})
+          } else {
+            res.send({message:"updated succefully", status:true})
+          }
+        })
+       
+      } else {
+      res.send({ message: "can't find", status: false }); 
+     }
+    }
+  })
+
+}
+
+const removeQuizAcessPassword = (req, res) => {
+  console.log(req.body)
+   quizModel.findOne({ _id: req.body.access }, (err, result) => {
+     if (err) {
+       res.send({ message: "an error status", status: false });
+     } else {
+       if (result !== null) {
+         console.log(result);
+         result.locked = false;
+         result.quizResultAcessPassword = "";
+         quizModel.findOneAndUpdate(
+           { _id: req.body.access },
+           result,
+           (err) => {
+             if (err) {
+               console.log(err);
+               res.send({ message: "an error occured", status: false });
+             } else {
+               res.send({ message: "removed succefully", status: true });
+             }
+           }
+         );
+       } else {
+         res.send({ message: "can't find", status: false });
+       }
+     }
+   });
+}
+
 const deleteSpecificQuizCollection = (req, res) => {
   console.log(req.body);
   quizModel.findByIdAndDelete({ _id: req.body.quizId }, (err) => {
@@ -501,8 +630,10 @@ const getSpecificQuiz = (req, res) => {
 
 const uploadImageForQuiz = (req, res) => {
   console.log(req.body)
+    const uid = new ShortUniqueId()
+  const uidWithTimestamp = uid.stamp(20)
   const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
-    public_id: "olympic_flag",
+    public_id: uidWithTimestamp,
   });
 
   imageUpload
@@ -590,6 +721,16 @@ const checkParticiPants = (req, res) => {
   
 }
 
+// DeleteQuiz
+const deleteQuiz = (req, res) => {
+  playerModel.findByIdAndDelete({ _id: req.body.quizId }, (err) => {
+    if (err) {
+      res.send({message:"unable to delete", status:false})
+    } else {
+      res.send({message:"deleted succesfully", status:true})
+    }
+  })
+}
 module.exports = {
   adminSignUp,
   emailVerification,
@@ -600,10 +741,17 @@ uploadSettingImage,
   createQuiz,
   viewQuiz,
   loadQuizCollection,
+  deleteQuestion,
+  editQuestion,
+  generateMorePassword,
+  quizAcessPassword,
+  removeQuizAcessPassword,
   deleteSpecificQuizCollection,
   generateTokenForQuiz,
   getSpecificQuiz,
   uploadImageForQuiz,
   addQuestion,
-  checkParticiPants
+  checkParticiPants,
+  deleteQuiz,
+
 };

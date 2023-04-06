@@ -7,7 +7,8 @@ const adminSchema = mongoose.Schema({
   adminPassword: { type: String },
   adminImg: { type: String },
   adminEmailVerificationStatus: { type: Boolean },
-  searchId:{type:String}
+  searchId:{type:String},
+  locked:{type:Boolean}
 });
 
 const saltRound = 5;

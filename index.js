@@ -35,6 +35,8 @@ app.use("/search", searchRoute )
 const playerModel = require("./models/Playersmodel")
 const adminLoggedIn =  []
 const playerPlayingDetail = []
+const views = []
+const  mark = []
 io.on("connection", (socket) => {
   // admin creating a room and creation of player registarion box
   socket.emit("userId", { id: socket.id })
@@ -108,6 +110,10 @@ io.on("connection", (socket) => {
     } else {
       let date = new Date
       let playerPlayinSchema = {}
+      let markSchema = {
+        id:uniqueId.quizId,
+        players: []
+      }
       if (uniqueId.mode === 1) {
          playerPlayinSchema = {
            currentGameIndex: 0,
@@ -126,6 +132,7 @@ io.on("connection", (socket) => {
            month: Number(String(uniqueId.date).split("-")[1]),
            year: Number(String(uniqueId.date).split("-")[0]),
            day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
+           totalRanking:[],
          };
       } else if (uniqueId.mode === 2) {
         playerPlayinSchema = {
@@ -144,6 +151,7 @@ io.on("connection", (socket) => {
           month: Number(String(uniqueId.date).split("-")[1]),
           year: Number(String(uniqueId.date).split("-")[0]),
           day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
+          totalRanking:[],
         };
       } else if (uniqueId.mode === 3) {
         playerPlayinSchema = {
@@ -163,14 +171,16 @@ io.on("connection", (socket) => {
           month: Number(String(uniqueId.date).split("-")[1]),
           year: Number(String(uniqueId.date).split("-")[0]),
           day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
+          totalRanking:[]
         };
         console.log()
         
      }
     
       playerPlayingDetail.push(playerPlayinSchema)
+      mark.push(markSchema)
       socket.join(uniqueId.quizId)
-      console.log(playerPlayingDetail)
+      // console.log(playerPlayingDetail, mark)
     }
   });
   // player registration
@@ -302,38 +312,74 @@ io.on("connection", (socket) => {
   })
 
   socket.on("mode1SubmitQuestion", (data) => {
- io.sockets.to(data.roomId).emit("collectAnswer", {roomId:data.roomId})
-
+    io.sockets.to(data.roomId).emit("collectAnswer", {roomId:data.roomId})
      
   })
-
-  socket.on("submittedAnswer", (data)=>{
+// ///////////////////////////////////////////////////////////////////////////
+  socket.on("submittedAnswer", async(data)=>{
 
     if (data.currentSubject !== "" && data.name !== "" && data.roomId !== "" && data.score !== -1) {
-      console.log(data)
+      console.log(data, "this your answer")
+      // const checkMarkBox = mark.find((content)=> content.id === data.roomId)
+      // // const players = []
+      // const IfPlayerExist = checkMarkBox.players .filter((playerName) => playerName.name === data.name)
+      // if (IfPlayerExist.length === 0) {
+      //   // players.push(data)
+      //   checkMarkBox.players.push(data)
+      // }
+      // // console.log(checkMarkBox,"++++++++++++++++++++++++++++++++++++++++")
+      //   const  check = playerPlayingDetail.filter((content, id) => content.uniqueId === players[i].roomId)
+      // for (let i = 0; i <  checkMarkBox.players.length; i++){
+      //   let check = playerPlayingDetail.filter((content, id) => content.uniqueId === checkMarkBox.players[i].roomId)
+      //   if (check.length > 0) {
+      //     let findGameRoom = playerPlayingDetail.find((content) => content.uniqueId === checkMarkBox.players[i].roomId)
+      //     const currentPlayer = findGameRoom.players.find((player) => player.playerName === checkMarkBox.players[i].name)
+      //     currentPlayer.subjectToBeDone.map((subject, id) => {
+      //       if (subject.quizName === checkMarkBox.players[i].currentSubject) {
+      //         subjectToBeDoneIdentification = id
+      //         subject.score = 0
+      //         currentPlayer.subjectToBeDone[id].questions[check[0].currentGameIndex] = data.score
+      //         subject.score = subject.questions.reduce((total, score)=> total + score, 0)
+              
+      //       }
+      //     })
+       
+      //    checkMarkBox.players.splice(i, 1)
+      //     i--;
+      //   }
+      // }
+      // console.log(playerPlayingDetail[0].players[0].subjectToBeDone, playerPlayingDetail[0].players[1].subjectToBeDone);
+      // console.log(checkMarkBox, "when it's empty")
       let check = playerPlayingDetail.filter((content, id) => content.uniqueId === data.roomId)
       // let currentScore = 
-let subjectDoneIdentification = 0
+      let subjectDoneIdentification = 0
       if (check.length > 0) {
-        playerPlayingDetail.map((content) => {
+        
+        const calculate = playerPlayingDetail.map((content) => {
           if (content.uniqueId === data.roomId) {
+            console.log(content.currentGameIndex)
             content.players.map((player) => {
               if (player.playerName === data.name) {
-               
+
                 player.subjectToBeDone.map((subject,id) => {
                   if (subject.quizName === data.currentSubject) {
-                     subjectDoneIdentification = id
-                    subject.questions[content.currentGameIndex] = data.score
-                     
+                    subjectDoneIdentification = id
+                    // subject.score = 0;
+              return   player.subjectToBeDone[id].questions[check[0].currentGameIndex] = data.score
+                    // subject.questions.map((score) => {
+                    //   subject.score += score
+                    // })
+                    
                   }
-                 
+               
                 })
                 
               }
             })
           }
         })
-
+       console.log(calculate)
+         console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone);
         io.sockets.to(check[0].uniqueId).emit("showAdminMode1CurrentScore", {
           roomId:check[0].uniqueId,
           subjectDoneIdentification: subjectDoneIdentification,
@@ -348,39 +394,45 @@ let subjectDoneIdentification = 0
   })
 
 
-  socket.on("changedToNextQuestionOrSubjectOverallAdminMode1", (data) => {
+  socket.on("changedToNextQuestionOrSubjectOverallAdminMode1", async (data) => {
+    console.log(data)
      const check = playerPlayingDetail.filter((content, id) => content.uniqueId === data.roomId)
     if (check.length > 0) {
+      let subjectName =check[0].currentSubjectName
       if (check[0].totalCurrentSubject.length - 1 === check[0].currentGameIndex) {
         let ranking = []
         let identi = 0
-        playerPlayingDetail.map((content) => {
+       
+       const updated = playerPlayingDetail.forEach((content) => {
           if (content.uniqueId === data.roomId) {
             content.adminPage = "AdminPage03";
-            content.gameStatus.map((state) => {
+            content.gameStatus.forEach((state) => {
               if (state.name === check[0].currentSubjectName) {
                 state.status = true
               }
             })
-            content.players.map((player)=>{
-              player.subjectToBeDone.map((subject, id) => {
-                if (subject.quizName === check[0].currentSubjectName) {
-                  identi = id
-                  subject.score = 0
-                  subject.questions.map((score) => {
-                    console.log(score, "this is your score")
-                    subject.score += Number(score)
-                    
-                  })
-                 ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score)
-                    
-                }
-                
-               })
+            content.players.map((player) => {
+              const subject = player.subjectToBeDone.find((subject) => subject.quizName === subjectName)
+              
+              const total = subject.questions.reduce((total, score) => total + score, 0)
+              subject.score += Number(total)
+             
             })
-          }
-        })
+             return content;
+         }
         
+       })
+         check[0].players.map((player) => {
+          player.subjectToBeDone.map((subject, id) => {
+            if (subject.quizName === subjectName) {
+              identi = id
+               ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score)
+            }
+          });
+        });
+              
+       
+        console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone)
         io.sockets.to(check[0].uniqueId).emit("adminMode1SubjectOverall", {
           roomId: check[0].uniqueId,
           ranking: ranking.reverse(),
@@ -418,6 +470,7 @@ let subjectDoneIdentification = 0
    }
   })
  
+  /////////////////////////////////////////////////////////////////////////////////////////////
   // Stage 2
   socket.on("switchToLoad", (load)=>{
      
@@ -491,6 +544,7 @@ let subjectDoneIdentification = 0
             currentSubject: start.currentSubject,
             assignedMark: start.assignedMark,
             time: lookForThatArray[0].currenTime,
+            mode:lookForThatArray[0].mode
           });
         io.sockets.to("yes").emit("startGameOnAdminPageAlso", {
           currentSubject: start.question,
@@ -544,7 +598,7 @@ let subjectDoneIdentification = 0
   
 });
 
-  socket.on("changeQuestion", (data) => {
+socket.on("changeQuestion", (data) => {
     let check = playerPlayingDetail.filter((content) => content.uniqueId === data.roomId)
   let totalScore = 0
     if (check.length > 0) {
@@ -560,18 +614,22 @@ let subjectDoneIdentification = 0
                    nameState.status = true;
                  }
                  console.log(content.players)
-                 content.players.map((players) => {
+                 if (check[0].mode !== 1) {
+                    content.players.map((players) => {
                    players.subjectToBeDone.map((subject) => {
                      if (subject.quizName === check[0].currentSubject) {
-                             subject.score = 0
-                            subject.questions.map((scores) => {
-                              subject.score += Number(scores)
-                              console.log(subject.score, scores, subject.questions)
+                          subject.score = 0
+                             subject.questions.map((scores) => {
+                               subject.score += Number(scores)
+                               console.log(subject.score, scores, subject.questions)
                               
-                        }) 
+                         }) 
+                       
                      }
                    })
                  })
+                 }
+                
                });
              }
 
@@ -619,40 +677,90 @@ let subjectDoneIdentification = 0
          }
     }
     
-  })
+})
+  
+// socket.on("alertSubmitOrNext", (data) => {
+//     const check = playerPlayingDetail.filter((id) => id.uniqueId === data.gameId)
+//     console.log(check[0])
+//     if (check.length > 0) {
+//       if (check[0].allQuizIndex === check[0].gameStatus.length - 1) {
+//         // alertSubmit
+//         console.log("no")
+//         io.sockets.to(check[0].uniqueId).emit("alertUserToSubmit", {info:check[0].uniqueId})
+//       } else {
+//         playerPlayingDetail.map((game, id) => {
+//           if (game.uniqueId === data.gameId) {
+//             game.adminPage = "AdminPage01";
+//           }
+//         });
+//         io.sockets
+//           .to(check[0].uniqueId)
+//           .emit("changePageToNextSubject", { adminId: check[0].uniqueId });
+//       }
+//     }
+// })
 
-  socket.on("switchPageToNextSubjectOrOverallResult", (data) => {
-    const check = playerPlayingDetail.filter((id) => id.uniqueId === data.gameId)
-    console.log(check[0])
-    if (check.length > 0) {
-      if (check[0].allQuizIndex === check[0].gameStatus.length - 1) {
-         // you do the calculation for overaLL RESULT
-           playerPlayingDetail.map((content,id)=>{
-             if (content.uniqueId === data.gameId) {
-               content.adminPage = "AdminPage04"
-               content.players.map((players, id) => {
-                  
-                 players.subjectToBeDone.map((scores, id) => {
-                   players.totalScore += scores.score; 
-                 })
+  socket.on("nextSubjectOrOverallResult", (data) => {
+    if (data.gameId !== "") {
+      console.log(data)
+      const check = playerPlayingDetail.filter((id) => id.uniqueId === data.gameId)
+      if (check.length > 0) {
+        if (check[0].allQuizIndex === check[0].gameStatus.length - 1) {
+          
+          // const user = playerPlayingDetail.find((content) => content.rommId === data.rommId)
+          // user.players.map((content) => {
+          //   const total = content.subjectToBeDone.reduce((total, score) => {
+          //   return  total.score + score.score
+          //   }, 0)
+          //   console.log(total)
+          // })
+          const clalculatedTotalScore = playerPlayingDetail.map((roomId) => {
+            if (roomId.uniqueId === data.gameId) {
+              roomId.players.map((player) => {
+                player.totalScore = 0;
+                player.subjectToBeDone.map((subject) => {
+                  player.totalScore += Number(subject.score);
+                });
+                // const totalCalculated = player.subjectToBeDone.reduce((total, score) => total.score + score.score, 0)
+                // player.totalScore += Number(totalCalculated)
               })
+          
             }
-           })   
-        
-        const overallResult = check[0].players.sort((a, b)=> a.totalScore - b.totalScore).reverse()
-      io.sockets.to(check[0].uniqueId).emit("overallResult", {adminId:check[0].uniqueId, overallResult:overallResult, currentSubject:overallResult})
-      } else {
-        console.log("no")
-        playerPlayingDetail.map((game, id) => {
-          if (game.uniqueId === data.gameId) {
-             game.adminPage = "AdminPage01";
+            return roomId
+           
+            // return player
+          })
+          console.log(check[0].players)
+          const overallResult = check[0].players.sort((a, b) => b.totalScore - a.totalScore)
+          let rank  = 1
+          for (let i = 0; i < overallResult.length; i++){
+            if (i > 0 && overallResult[i].totalScore !== overallResult[i - 1].totalScore) {
+              rank = i + 1
+             
+            }
+             check[0].totalRanking.push({
+               name: overallResult[i].playerName,
+               score: overallResult[i].totalScore,
+               rank: rank,
+             });
           }
-        })
-        io.sockets.to(check[0].uniqueId).emit("changePageToNextSubject", {adminId:check[0].uniqueId})
-      }
+      
+          io.sockets.to(check[0].uniqueId).emit("overallResult", { adminId: check[0].uniqueId, overallResult: overallResult, currentSubject: overallResult, position: check[0].totalRanking})
+        } else {
+          playerPlayingDetail.map((game, id) => {
+            if (game.uniqueId === data.gameId) {
+              game.adminPage = "AdminPage01";
+            }
+          });
+          io.sockets
+            .to(check[0].uniqueId)
+            .emit("changePageToNextSubject", { adminId: check[0].uniqueId });
+        }
+      } 
     }
-
-  });
+    
+   
+  })
 
 
 // this socket is responsible for joining the server result with the databse result
@@ -675,7 +783,8 @@ let subjectDoneIdentification = 0
                   quiz.result = check[0].players
                   quiz.month = check[0].month
                   quiz.year = check[0].year
-                 quiz.day = check[0].day
+                  quiz.day = check[0].day
+                  quiz.ranking = check[0].totalRanking
                   console.log(quiz.result);
                   // quiz.result = check[0].players;
                   playerModel.findOneAndUpdate( { quizIdNumberPlayed: check[0].uniqueId }, quiz,(err) => {
@@ -817,11 +926,11 @@ let subjectDoneIdentification = 0
     })
     socket.to(data.roomId).emit("collectPlayersAnswers", {roomId:data.roomId})
   })
-  socket.on("verifyToSubmitAnswer", (data) => {
+  socket.on("verifyToSubmitAnswer", async(data) => {
    const check = playerPlayingDetail.filter((content)=> content.uniqueId === data.roomId)
     if(data.username !== '' && data.currentSubject !== '' && (data.totalScore.length === check[0].currentQuestion.length) && data.roomId !== ''){
       const comingData = data
-   console.log(data)
+   console.log(data,"this is your data")
       const findSubmitted = check[0].submitted.filter((subject)=> subject.subjectName === check[0].currentSubjectName) 
       const findUser = findSubmitted[0].submitted.filter((user)=> user.name === data.username)
       let ranking = []
@@ -845,30 +954,66 @@ let subjectDoneIdentification = 0
             })
           }
         })
-      } else{
+      } else {
+         
+          const updated = playerPlayingDetail.find((content) => content.uniqueId === check[0].uniqueId);
+        
+         const userSubmitting = updated.players.find((content) => content.playerName === data.username );
+       
+        if (data.username === userSubmitting.playerName) {
+        
+         const currentSubject = userSubmitting.subjectToBeDone.find((subject) => subject.quizName === check[0].currentSubjectName);
+          
+          currentSubject.score = data.totalScore.reduce((total, score) => total + score, 0);
+             
+          console.log(currentSubject, "that current subject");
+        }
+
+ 
+     
+        // currentSubject.score = total;
         playerPlayingDetail.map((content) => {
           if (content.uniqueId === check[0].uniqueId) {
             content.adminPage = "AdminPage03"
             content.players.map((player) => {
               if (player.playerName === data.username) {
                 player.subjectToBeDone.map((subject, id) => {
-               
+
                   if (subject.quizName === content.currentSubjectName) {
-                    subject.score = 0;
-                    data.totalScore.map((score) => {
-                      subject.score += score
-                    })
+                
                     identification = id
-                    console.log(subject.score, player.playerName)
+          
                     ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score).reverse()
                   }
                 })
               }
-          
+
             })
           }
         })
-  }
+        // playerPlayingDetail.map((content) => {
+        //   if (content.uniqueId === check[0].uniqueId) {
+        //     content.adminPage = "AdminPage03"
+        //     content.players.map((player) => {
+        //       if (player.playerName === data.username) {
+        //         player.subjectToBeDone.map((subject, id) => {
+
+        //           if (subject.quizName === content.currentSubjectName) {
+        //             subject.score = 0;
+        //             data.totalScore.map((score) => {
+        //               subject.score += score
+        //             })
+        //             identification = id
+        //             console.log(subject.score, player.playerName)
+        //             ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score).reverse()
+        //           }
+        //         })
+        //       }
+
+        //     })
+        //   }
+        // })
+      }
   console.log(ranking, identification)
   io.sockets.to(check[0].uniqueId).emit("stage3PreSubject", {
     ranking:ranking,
@@ -932,6 +1077,64 @@ let subjectDoneIdentification = 0
     
   })
 
+
+
+
+
+
+  // Views 
+  socket.on("views", (data) => {
+   socket.join(data.name)
+    console.log(data)
+    const viewBox = []
+    const likeBox = []
+    data.result.map((content) => {
+      const checkView = viewBox.filter((id) => id.quizId === content._id)
+      const checkLike = likeBox.filter((id) => id.quizId === content._id);
+      if (checkView.length === 0) {
+        viewBox.push({ quizId: content._id, views: 0 });
+      } 
+      if (checkLike.length === 0) {
+        likeBox.push({ quizId: content._id, likes: 0 });
+      }
+      
+      
+    })
+    console.log(viewBox, likeBox)
+    const check = views.filter((content) => content.name === data.name)
+    if (check.length > 0) {
+      console.log("user already exist")
+      let newUserView = []
+      check[0].views.map((content) => {
+        newUserView = viewBox.filter((quizLike) => quizLike.quizId !== content.quizId)
+
+      })
+      
+      newUserView.map((content) => {
+        const seeif = check[0].views.filter((content) => content.quizId === content.quizId)
+        if (seeif.length === 0) {
+          check[0].views.push(content);
+          check[0].like.push(content);
+        }
+        
+     })
+      
+    } else {
+      views.push({ name: data.name, like:likeBox, views:viewBox });
+    }
+    console.log(views[0])
+    io.sockets.to(data.id).emit("views",{views:views[0].views})
+  })
+   socket.on("countView", (data) => {
+     const currentCollection = views.filter((content) => content.name === data.collectionId);
+     const check = currentCollection.find((content) => content.name === data.collectionId);
+     const currentview = check.views.find((content) => content.quizId === data.quizId );
+     currentview.views = currentview.views + 1;
+     console.log(views[0].views);
+     io.sockets.to(data.sId).emit("countedViews", {
+       views: check.views,
+     });
+   });
   socket.on("disconnect", () => {
     console.log("a userhas disconnected");
   });

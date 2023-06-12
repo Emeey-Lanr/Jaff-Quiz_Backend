@@ -12,13 +12,21 @@ const server = app.listen(PORT, () => {
   console.log(`a user has connected at Port ${PORT}`);
 });
 
-mongoose.connect(URI, (err) => {
+// const connectDb = async () => {
+//   try {
+//     const dbConnect = mongoose.connect(`${URI}`)
+//   } catch (error) {
+//     console.log(error.message)
+//   }
+// }
+// connectDb()
+mongoose.connect(URI, {useNewUrlParser:true, useUnifiedTopology:true}, (err) => {
   if (err) {
-    console.log(err);
+    console.log(err)
   } else {
-    console.log("mongoose has connectd");
+    console.log("connected")
   }
-});
+})
 
 const Socket = require("socket.io");
 const io = Socket(server, { cors: { option: "*" } });

@@ -7,26 +7,19 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const PORT = process.env.PORT;
 const URI = process.env.URI;
+console.log(URI)
+const server = app.listen(PORT, async () => {
+   try {
+     const connectToDb = await mongoose.connect(`${URI}`);
+    console.log(`a user has connected at Port ${PORT}`);
+   } catch (error) {
+     console.log(error);
+   }
 
-const server = app.listen(PORT, () => {
-  console.log(`a user has connected at Port ${PORT}`);
 });
 
-// const connectDb = async () => {
-//   try {
-//     const dbConnect = mongoose.connect(`${URI}`)
-//   } catch (error) {
-//     console.log(error.message)
-//   }
-// }
-// connectDb()
-mongoose.connect(URI, {useNewUrlParser:true, useUnifiedTopology:true}, (err) => {
-  if (err) {
-    console.log(err)
-  } else {
-    console.log("connected")
-  }
-})
+
+
 
 const Socket = require("socket.io");
 const io = Socket(server, { cors: { option: "*" } });

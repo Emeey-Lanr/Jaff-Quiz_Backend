@@ -39,9 +39,17 @@ const jwtAdminId = (req, res) => {
 }
 
 
-const getAdminDetails = (req, res)=>{
+const getAdminDetails = async (req, res) => {
+  // try {
+  //   let adminIdVerification = req.headers.authorization.split(" ")[1];
+  //   const verifyToken = await jwt.verify(adminIdVerification, process.env.secret)
+  //   const adminModel = await adminModel.findOne({ _id: verifyToken.adminID })
+  //   return res.send({ Message: "admin found", status: true, admin: adminModel });  
+    
+  // } catch (error) {
+    
+  // }
     let adminIdVerification = req.headers.authorization.split(" ")[1]
-    console.log(adminIdVerification)
     jwt.verify(adminIdVerification, process.env.secret, (err, result) => {
        
         if (err) {

@@ -1,6 +1,7 @@
 const adminModel = require('../models/adminModel')
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
+const quizModel = require("../models/QuizQuestionModel")
 class AdminValidation {
     static async signup(body) {
          const { adminEmail, adminUserName } = body;
@@ -55,6 +56,23 @@ class AdminValidation {
             
         }
       
+        
+    }
+    static async createQuizValidation(adminId, cclass) {
+        try {
+                  const FindAllQuiz = await quizModel.find({ adminId })
+        const currentClassQuiz = FindAllQuiz.filter((content) => content.class === cclass)
+        
+            const checkifSubjectNameExist = currentClassQuiz.find((content) => content.toUpperCase() === quizName.toUpperCase())
+            if (checkifSubjectNameExist) {
+                return new Error("Subject name already exist")
+            }
+            
+        } catch (error) {
+            
+        }
+  
+
         
     }
 }

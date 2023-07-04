@@ -7,7 +7,8 @@ var ID = require("nodejs-unique-numeric-id-generator");
 var generator = require("generate-password");
 const cloudinary = require("cloudinary").v2;
 const ShortUniqueId = require('short-unique-id')
-const Admin = require('../Services/admin')
+const Admin = require('../Services/admin');
+const AdminValidation = require("../Validators/admin");
 cloudinary.config({
   cloud_name: process.env.Cloudinary_cloud_name,
   api_key: process.env.Cloudinary_api_key,
@@ -247,105 +248,124 @@ const adminDasboard = (req, res) => {
 };
 
 // Upload Setting Image
-const uploadSettingImage = (req, res) => {
-    const uid = new ShortUniqueId();
-    const uidWithTimestamp = uid.stamp(10);
-   const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
-     public_id: uidWithTimestamp,
-   });
+const uploadSettingImage = async (req, res) => {
+  try {
+    const imageUpload = await Admin.uploadImage(req.body.imageUrl, req.body.adminId)
+    if (imageUpload instanceof Error) {
+      return res.status(400).send({message:imageUpload.message, status:false})
+    }
+    return res.status(200).send({message:"Uploaded succesfuuly", status:true})
+    
+  } catch (error) {
+    return res.status(500).send({message:error.message, status:false})
+  }
+  //   const uid = new ShortUniqueId();
+  //   const uidWithTimestamp = uid.stamp(10);
+  //  const imageUpload = cloudinary.uploader.upload(req.body.imageUrl, {
+  //    public_id: uidWithTimestamp,
+  //  });
 
-   imageUpload
-     .then((data) => {
-      //  res.send({ status: true, imgUrl: data.secure_url });
-       adminModel.findOne({ _id: req.body.adminId }, (err, result) => {
-         if (err) {
-           res.send({message:"an error occured", status:false})
-         } else {
-           result.adminImg = data.secure_url
-           adminModel.findByIdAndUpdate({ _id: req.body.adminId }, result, (err) => {
-             if (err) {
-               res.send({message:"an error occured", status:false})
-             } else {
-               res.send({message:"uploaded succesfully", status:true})
-             }
-           })
-         }
-       })
-     })
-     .catch((err) => {
-       if (err) {
-         cosole.log(err);
-         res.send({ status: false, message: "An error ocurred" });
-       }
-     });
+  //  imageUpload
+  //    .then((data) => {
+  //     //  res.send({ status: true, imgUrl: data.secure_url });
+  //      adminModel.findOne({ _id: req.body.adminId }, (err, result) => {
+  //        if (err) {
+  //          res.send({message:"an error occured", status:false})
+  //        } else {
+  //          result.adminImg = data.secure_url
+  //          adminModel.findByIdAndUpdate({ _id: req.body.adminId }, result, (err) => {
+  //            if (err) {
+  //              res.send({message:"an error occured", status:false})
+  //            } else {
+  //              res.send({message:"uploaded succesfully", status:true})
+  //            }
+  //          })
+  //        }
+  //      })
+  //    })
+  //    .catch((err) => {
+  //      if (err) {
+  //        cosole.log(err);
+  //        res.send({ status: false, message: "An error ocurred" });
+  //      }
+  //    });
 
 }
 // /quiz creation
 
-const createQuiz = (req, res) => {
-  quizModel.find({ adminId: req.body.quizSchema.adminId }, (err, result) => {
-    console.log(result);
-    if (err) {
-      res.send({ message: "an error occured", status: false });
-    } else {
-      const currentClassQuiz = result.filter(
-        (content, id) => content.class === req.body.quizSchema.class
-      );
-
-      const checkifSubjectNameExist = currentClassQuiz.filter(
-        (content, id) =>
-          content.quizName.toUpperCase() ===
-          req.body.quizSchema.quizName.toUpperCase()
-      );
-
-      if (checkifSubjectNameExist.length > 0) {
-        res.send({ message: "Subject name already exist", status: false });
-      } else {
-        req.body.quizSchema.quizId = ID.generate(new Date().toJSON());
-        console.log(req.body.quizSchema);
-        let passwordMutiple = generator.generateMultiple(
-          req.body.numberToBeGenerated,
-          {
-            length: 6,
-            upperCase: false,
-            numbers: true,
-          }
-        );
-        let singlePassword = generator.generateMultiple(1, {
-          length: 6,
-          uppercase: true,
-          numbers: true,
-        });
-        console.log(passwordMutiple);
-        if (req.body.multiple) {
-          req.body.quizSchema.quizMultiplePassword = passwordMutiple;
-        } else {
-          req.body.quizSchema.quizPin = singlePassword[0];
-        }
-        const jwtClassIdentification = jwt.sign(
-          {
-            class: req.body.quizSchema.class,
-            adminId: req.body.quizSchema.adminId,
-          },
-          process.env.Secret,
-          { expiresIn: "7d" }
-        );
-        let saveNewQuiz = new quizModel(req.body.quizSchema);
-        saveNewQuiz.save((err, result) => {
-          if (err) {
-            console.log(err);
-            res.send({ message: "unable to create quiz", status: false });
-          } else {
-            res.send({
-              message: "created succesfully",
-              status: true,
-              classId: jwtClassIdentification,
-            });
-          }
-        });
-      }
+const createQuiz = async (req, res) => {
+  try {
+    const newQuiz = await Admin.createQuiz(req.body)
+    if (newQuiz instanceof Error) {
+      return res.status(400).send({mesage:newQuiz.message, status:false})
     }
-  });
+    return res.staus(200).send({message:"created succesfully", status:true, classId:newQuiz.token, data:newQuiz.newQuiz})
+  } catch (error) {
+    
+  }
+  // quizModel.find({ adminId: req.body.quizSchema.adminId }, (err, result) => {
+  //   console.log(result);
+  //   if (err) {
+  //     res.send({ message: "an error occured", status: false });
+  //   } else {
+  //     const currentClassQuiz = result.filter(
+  //       (content, id) => content.class === req.body.quizSchema.class
+  //     );
+
+  //     const checkifSubjectNameExist = currentClassQuiz.filter(
+  //       (content, id) =>
+  //         content.quizName.toUpperCase() ===
+  //         req.body.quizSchema.quizName.toUpperCase()
+  //     );
+
+  //     if (checkifSubjectNameExist.length > 0) {
+  //       res.send({ message: "Subject name already exist", status: false });
+  //     } else {
+  //       req.body.quizSchema.quizId = ID.generate(new Date().toJSON());
+  //       console.log(req.body.quizSchema);
+  //       let passwordMutiple = generator.generateMultiple(
+  //         req.body.numberToBeGenerated,
+  //         {
+  //           length: 6,
+  //           upperCase: false,
+  //           numbers: true,
+  //         }
+  //       );
+  //       let singlePassword = generator.generateMultiple(1, {
+  //         length: 6,
+  //         uppercase: true,
+  //         numbers: true,
+  //       });
+  //       console.log(passwordMutiple);
+  //       if (req.body.multiple) {
+  //         req.body.quizSchema.quizMultiplePassword = passwordMutiple;
+  //       } else {
+  //         req.body.quizSchema.quizPin = singlePassword[0];
+  //       }
+  //       const jwtClassIdentification = jwt.sign(
+  //         {
+  //           class: req.body.quizSchema.class,
+  //           adminId: req.body.quizSchema.adminId,
+  //         },
+  //         process.env.Secret,
+  //         { expiresIn: "7d" }
+  //       );
+  //       let saveNewQuiz = new quizModel(req.body.quizSchema);
+  //       saveNewQuiz.save((err, result) => {
+  //         if (err) {
+  //           console.log(err);
+  //           res.send({ message: "unable to create quiz", status: false });
+  //         } else {
+  //           res.send({
+  //             message: "created succesfully",
+  //             status: true,
+  //             classId: jwtClassIdentification,
+  //           });
+  //         }
+  //       });
+  //     }
+  //   }
+  // });
 };
 
 const viewQuiz = (req, res) => {

@@ -3,6 +3,15 @@ const adminModel = require("../models/adminModel")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const AdminEmail = require("../Services/Email")
+const ShortUniqueId = require("short-unique-id");
+const quizModel = require("../models/QuizQuestionModel")
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.Cloudinary_cloud_name,
+  api_key: process.env.Cloudinary_api_key,
+  api_secret: process.env.Cloudinary_api_secret,
+});
 class Admin {
     static async signup(payload) {
       
@@ -75,7 +84,52 @@ class Admin {
             
         }
     }
-    
+    static async adminDasboard() {
+        
+    }
+    static async uploadImage(imageUrl, admindId) {
+        try {
+                const uid = new ShortUniqueId();
+        const uidWithTimestamp = uid.stamp(10);
+        const uploadImage = await cloudinary.uploader.upload(imageUrl, { public_id: uidWithTimestamp });
+            const findUser = await adminModel.findOne({ id: admindId })
+            findUser.adminImg = uploadImage.secure_url
+            const updateUser = await adminModel.findByIdAndUpdate({ id: findUser.id }, findUser)
+            
+        } catch (error) {
+            return new Error(error.message)
+        }
+        
+    }
+    static async createQuiz(payload) {
+        const { quizSchema, multiple } = payload;
+        const { adminId, quizId, quizMultiplePassword, quizPin } = quizSchema;
+        try {
+          const verifyQuiz = await AdminValidation.createQuizValidation(
+            adminId,
+            quizSchema.class
+          );
+          if (verifyQuiz instanceof Error) {
+            return new Error(verifyQuiz.message);
+            
+            }
+             const password = await AdminEmail.createQuizPasswordId(quizId)
+            if (multiple) {
+                quizSchema.quizMultiplePassword = password.multiple
+            } else {
+                quizSchema.quizPin = password.single[0]
+            }
+            const jwtClassIdentification = jwt.sign({ class: quizSchema.class, adminId: quizSchema.adminId }, process.env.Secret, { expiresIn: "7d" });
+            const newQuiz = new quizModel(quizSchema)
+            const createNewQuiz = await newQuiz.save()
+            return { newQuiz: createNewQuiz, token: jwtClassIdentification }
+            
+        } catch (error) {
+            return new Error(error.message)
+            
+        }
+        
+    }
 
 }
 

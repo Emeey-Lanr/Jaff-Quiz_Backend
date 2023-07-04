@@ -1,5 +1,7 @@
 const nodemailer = require("nodemailer")
-const {signUpEmail} = require("../Utilis/email")
+const { signUpEmail } = require("../Utilis/email")
+var generator = require("generate-password");
+var ID = require("nodejs-unique-numeric-id-generator");
 class AdminEmail {
     static async signup(token, email) {
         try {
@@ -132,6 +134,28 @@ class AdminEmail {
       
     }
      
+  }
+  static async createQuizPasswordId(quizId) {
+    try {
+       quizId = ID.generate(new Date().toJSON());
+         console.log(req.body.quizSchema);
+         let passwordMutiple = generator.generateMultiple(
+           req.body.numberToBeGenerated,
+           {
+             length: 6,
+             upperCase: false,
+             numbers: true,
+           }
+         );
+         let singlePassword = generator.generateMultiple(1, {
+           length: 6,
+           uppercase: true,
+           numbers: true,
+         });
+      return {multiple:passwordMutiple, single:singlePassword}
+    } catch (error) {
+      
+    }
   }
 }
 

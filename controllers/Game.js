@@ -4,7 +4,9 @@ const adminModel = require("../models/adminModel");
 const playerModel = require("../models/Playersmodel");
 
 const cloudinary = require("cloudinary").v2;
-const ShortUniqueId = require('short-unique-id')
+const ShortUniqueId = require('short-unique-id');
+const Game = require("../Services/game");
+const { errorResponse } = require("../response/errorSuccess");
 cloudinary.config({
   cloud_name: process.env.Cloudinary_cloud_name,
   api_key: process.env.Cloudinary_api_key,
@@ -16,8 +18,20 @@ const adminGameLogin = async (req, res) => {
 
   try {
     
+    const gameLogin = await Game.adminGameLogin(req.body)
+    if (gameLogin instanceof Error) {
+      return errorResponse(res, 400, gameLogin.message)
+    }
+    res.send({
+                            message: "valid login",
+                            status: true,
+                            // this is used to kno if the admin is logged in if the admin is logged in 
+                            // then players should be able to if not players shouldn't be able to
+                           checkifAdminLogin:gameLogin.numberPlayed,
+                            adminStatusId: gameLogin.token,
+                          });
   } catch (error) {
-    
+    return errorResponse(res, 500, "an error occured", false)
   }
   // we look if that username exist
   // adminModel.findOne({ adminUserName: req.body.username }, (err, result) => {
@@ -124,89 +138,105 @@ const adminGameLogin = async (req, res) => {
   // });
 };
 
-const userGamePinVerification = (req, res) => {
-quizModel.findOne(
-    { quizMultiplePassword: req.body.password },
-    (err, result) => {
-      if (err) {
-        res.send({ message: "an error occured", status: false });
-      } else {
-        if (result !== null) {
-          playerModel.find({ quizId: result._id }, (err, gameCreated) => {
-            if (err) {
-              res.send({message:"an error occured",status:false})
-            } else {
-              if (gameCreated.length > 0) {
-                if (result.multiple) {
-                  result.quizMultiplePassword =  result.quizMultiplePassword.filter((content)=>content !== req.body.password)
-                  quizModel.findOneAndUpdate({ _id: result._id }, result, (err) => {
-                    if (err) {
-                  res.send({message:"an error occured", status:false})
-                    } else {
-                       const userpin = jwtId.sign(
-                         {
-                           adminStatus: false,
-                           quizID: result._id,
-                           adminId: result.adminId,
-                           subjectToBeDone: result.subjectToBePlayedByPlyers,
-                         },
-                         process.env.GS,
-                         { expiresIn: "1d" }
-                       );
-                       res.send({
-                         message: "success",
-                         passId: userpin,
-                         status: true,
-                         lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
-                       });
-                    }
-              })
+const userGamePinVerification = async (req, res) => {
+  try {
+    const verifyPin = await Game.userGamePinVerification(req.body);
+    if (verifyPin instanceof Error) {
+      return res.send({ message: verifyPin.message, status: false });
+    }
+    return res.send({
+      message: "success",
+      passId: verifyPin.token,
+      status: true,
+      lastGameUniqueId:
+        verifyPin.game[verifyPin.game.length - 1].quizIdNumberPlayed,
+    });
+  } catch (error) {
+    return res.send({ message: "an error occured", status: false });
+  }
+// quizModel.findOne(
+//     { quizMultiplePassword: req.body.password },
+//     (err, result) => {
+//       if (err) {
+//         res.send({ message: "an error occured", status: false });
+//       } else {
+//         if (result !== null) {
+//           playerModel.find({ quizId: result._id }, (err, gameCreated) => {
+//             if (err) {
+//               res.send({message:"an error occured",status:false})
+//             } else {
+//               if (gameCreated.length > 0) {
+//                 if (result.multiple) {
+//                   result.quizMultiplePassword =  result.quizMultiplePassword.filter((content)=>content !== req.body.password)
+//                   quizModel.findOneAndUpdate({ _id: result._id }, result, (err) => {
+//                     if (err) {
+//                   res.send({message:"an error occured", status:false})
+//                     } else {
+//                        const userpin = jwtId.sign(
+//                          {
+//                            adminStatus: false,
+//                            quizID: result._id,
+//                            adminId: result.adminId,
+//                            subjectToBeDone: result.subjectToBePlayedByPlyers,
+//                          },
+//                          process.env.GS,
+//                          { expiresIn: "1d" }
+//                        );
+//                        res.send({
+//                          message: "success",
+//                          passId: userpin,
+//                          status: true,
+//                          lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
+//                        });
+//                     }
+//               })
 
-              } else {
-                  const userpin = jwtId.sign(
-                   {
-                     adminStatus: false,
-                     quizID: result._id,
-                     adminId: result.adminId,
-                     subjectToBeDone: result.subjectToBePlayedByPlyers,
-                   },
-                   process.env.GS,
-                   { expiresIn: "1d" }
-                 );
-                 res.send({
-                   message: "success",
-                   passId: userpin,
-                   status: true,
-                   lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
-                 }); 
-              }
+//               } else {
+//                   const userpin = jwtId.sign(
+//                    {
+//                      adminStatus: false,
+//                      quizID: result._id,
+//                      adminId: result.adminId,
+//                      subjectToBeDone: result.subjectToBePlayedByPlyers,
+//                    },
+//                    process.env.GS,
+//                    { expiresIn: "1d" }
+//                  );
+//                  res.send({
+//                    message: "success",
+//                    passId: userpin,
+//                    status: true,
+//                    lastGameUniqueId:gameCreated[gameCreated.length - 1].quizIdNumberPlayed
+//                  }); 
+//               }
               
                 
-              } else {
-                res.send({message:"quiz can't  be accessed", status:false})
-              }
-            }
-          });
+//               } else {
+//                 res.send({message:"quiz can't  be accessed", status:false})
+//               }
+//             }
+//           });
 
          
          
-        } else {
-          res.send({ message: "Invalid Pin", status: false });
-        }
-      }
-    }
-  );
+//         } else {
+//           res.send({ message: "Invalid Pin", status: false });
+//         }
+//       }
+//     }
+//   );
 };
 
-const verifyPlayerPassToken = (req, res) => {
-  const userToken = req.headers.authorization.split(" ")[1];
-  jwtId.verify(userToken, process.env.GS, (err, result) => {
-    if (err) {
-      res.send({ message: "an error occured", status: false });
-    } else {
-      res.send({ message: "success", status: true, userDetail: result });
-    }
-  });
+const verifyPlayerPassToken = async (req, res) => {
+  try {
+    const userToken = req.headers.authorization.split(" ")[1];
+    const token =  jwtId.verify(userToken, process.env.GS)
+     res.send({ message: "success", status: true, userDetail: token });
+  } catch (error) {
+    res.send({ message: "an error occured", status: false });
+  }
+
+
 };
 
 const uploadPlayerImage = (req, res) => {
@@ -228,84 +258,92 @@ const uploadPlayerImage = (req, res) => {
     });
 };
 
-const savePlayerDetails = (req, res) => {
+const savePlayerDetails = async (req, res) => {
   console.log(req.body)
-  playerModel.find({ quizId: req.body.quizId }, (err, result) => {
-    if (err) {
-      res.send({message:"an error occured", status:false})
-    } else {
-      if (result.length > 0 ) {
-        let currentGame = result[result.length - 1]
-        // currentGame.push(req.body)
-        playerModel.findOne({ quizIdNumberPlayed: currentGame.quizIdNumberPlayed }, (err, currentQuiz) => {
-          if (err) {
-            res.send({message:"an error occured", status:false})
-          } else {
-            if (currentQuiz !== null) {
-              let checKIfNameExist = currentQuiz.players.filter((content)=> content.toUpperCase() === req.body.playerName.toUpperCase())
-              if (checKIfNameExist.length > 0) {
-                 res.send({message:"user name already exist", status:false})
-              } else {
-                currentQuiz.players.push(req.body.playerName)
-                playerModel.findByIdAndUpdate({ _id: currentGame._id }, currentQuiz, (err) => {
-                  if (err) {
-                    res.send({message:"an error occured", status:false})
-                  } else {
-                      let playerToken = jwtId.sign(
-                        {
-                          adminStatus: false,
-                          quizID: req.body.quizId,
-                          quizIdNumberPlayed: currentQuiz.quizIdNumberPlayed,
-                          playerInfo: req.body,
-                        },
-                        process.env.GS,
-                        { expiresIn: "7d" }
-                      );
-                      res.send({ status: true, playerToken: playerToken });
-                  }
-                })
-              }
-              
-            }
-          }
-        })
-        
-      }else{
-        res.send({status:false, message:"Game not available"})
-      }
+  try {
+    const savePlayerDetails = await Game.savePlayerDetails(req.body)
+    if (savePlayerDetails instanceof Error) {
+      return res.send({message:savePlayerDetails.message, status:false})
     }
+    return res.send({status:true, playerToken:savePlayerDetails})
+  } catch (error) {
+     res.send({ message: "an error occured", status: false });
+  }
+  // playerModel.find({ quizId: req.body.quizId }, (err, result) => {
+  //   if (err) {
+  //     res.send({message:"an error occured", status:false})
+  //   } else {
+  //     if (result.length > 0 ) {
+  //       let currentGame = result[result.length - 1]
+  //       // currentGame.push(req.body)
+  //       playerModel.findOne({ quizIdNumberPlayed: currentGame.quizIdNumberPlayed }, (err, currentQuiz) => {
+  //         if (err) {
+  //           res.send({message:"an error occured", status:false})
+  //         } else {
+  //           if (currentQuiz !== null) {
+  //             let checKIfNameExist = currentQuiz.players.filter((content)=> content.toUpperCase() === req.body.playerName.toUpperCase())
+  //             if (checKIfNameExist.length > 0) {
+  //                res.send({message:"user name already exist", status:false})
+  //             } else {
+  //               currentQuiz.players.push(req.body.playerName)
+  //               playerModel.findByIdAndUpdate({ _id: currentGame._id }, currentQuiz, (err) => {
+  //                 if (err) {
+  //                   res.send({message:"an error occured", status:false})
+  //                 } else {
+  //                     let playerToken = jwtId.sign(
+  //                       {
+  //                         adminStatus: false,
+  //                         quizID: req.body.quizId,
+  //                         quizIdNumberPlayed: currentQuiz.quizIdNumberPlayed,
+  //                         playerInfo: req.body,
+  //                       },
+  //                       process.env.GS,
+  //                       { expiresIn: "7d" }
+  //                     );
+  //                     res.send({ status: true, playerToken: playerToken });
+  //                 }
+  //               })
+  //             }
+              
+  //           }
+  //         }
+  //       })
+        
+  //     }else{
+  //       res.send({status:false, message:"Game not available"})
+  //     }
+  //   }
     
-  })
+  // })
 
 };
 
-const verifyAdminStatus = (req, res) => {
-  let id = req.headers.authorization.split(" ")[1];
-  jwtId.verify(id, process.env.GS, (err, result) => {
-    if (err) {
-      res.send({ status: false });
+const verifyAdminStatus = async (req, res) => {
+  try {
+    const id = req.headers.authorization.split(" ")[1];
+    const token = jwtId.verify(id, process.env.GS)
+    if (token.adminStatus) {
+       res.send({
+         status: true,
+         adminStatus: token.adminStatus,
+         questionToBeAnswered: token.question,
+         quizID: token.quizID,
+         quizIdNumberPlayedId: token.quizIdNumberPlayed,
+         mode: token.mode,
+       });
     } else {
-      console.log(result);
-      if (result.adminStatus) {
-        res.send({
-          status: true,
-          adminStatus: result.adminStatus,
-          questionToBeAnswered: result.question,
-          quizID: result.quizID,
-          quizIdNumberPlayedId: result.quizIdNumberPlayed,
-          mode:result.mode
-        });
-      } else {
-        res.send({
-          status: true,
-          adminStatus: result.adminStatus,
-          quizID: result.quizID,
-          userDetails: result.playerInfo,
-          quizIdNumberPlayedId: result.quizIdNumberPlayed,
-        });
-      }
+      res.send({
+        status: true,
+        adminStatus: token.adminStatus,
+        quizID: token.quizID,
+        userDetails: token.playerInfo,
+        quizIdNumberPlayedId: token.quizIdNumberPlayed,
+      });
     }
-  });
+  } catch (error) {
+    return res.send({mesage:"an error occured", status:false})
+  }
+
 };
 
 module.exports = {

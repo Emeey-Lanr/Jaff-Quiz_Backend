@@ -2,6 +2,7 @@ const GameValidators = require("../Validators/game")
 const playerModel = require("../models/Playersmodel")
 const jwt = require('jsonwebtoken');
 const quizModel = require("../models/QuizQuestionModel");
+
 class Game {
   static async adminGameLogin(payload) {
     const { username, state, gameId, mode } = payload;

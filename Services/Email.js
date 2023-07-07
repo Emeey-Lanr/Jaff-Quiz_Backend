@@ -135,24 +135,28 @@ class AdminEmail {
     }
      
   }
-  static async createQuizPasswordId(quizId) {
+  static async createQuizPasswordId(numberToBeGenerated, multiple) {
     try {
-       quizId = ID.generate(new Date().toJSON());
-         console.log(req.body.quizSchema);
-         let passwordMutiple = generator.generateMultiple(
-           req.body.numberToBeGenerated,
+      const id = ID.generate(new Date().toJSON());
+      if (multiple) {
+         const passwordMutiple = generator.generateMultiple(
+           numberToBeGenerated,
            {
              length: 6,
              upperCase: false,
              numbers: true,
            }
-         );
-         let singlePassword = generator.generateMultiple(1, {
+        );
+        return { pass: passwordMutiple, id }
+      } 
+
+        
+         const singlePassword = generator.generateMultiple(1, {
            length: 6,
            uppercase: true,
            numbers: true,
          });
-      return {multiple:passwordMutiple, single:singlePassword}
+      return { pass: singlePassword, id }
     } catch (error) {
       
     }

@@ -11,112 +11,117 @@ cloudinary.config({
   api_secret: process.env.Cloudinary_api_secret,
 });
 
-const adminGameLogin = (req, res) => {
+const adminGameLogin = async (req, res) => {
   console.log(req.body);
 
+  try {
+    
+  } catch (error) {
+    
+  }
   // we look if that username exist
-  adminModel.findOne({ adminUserName: req.body.username }, (err, result) => {
-    if (err) {
-      res.send({ message: "an error occured", status: false });
-    } else {
-      if (result !== null) {
-        console.log(result)
-        let adminId = result._id 
-        // result gotten is used to find all the quiz collection made by the amin logining in
-        quizModel.find({ adminId: result._id }, (err, quizCollection) => {
-          // we then now search if the quiz id coming is owned by the admin
-          console.log(quizCollection);
-          if (quizCollection.length > 0) {
-            // we look for the particular quiz
-            let theParticularQuiz = quizCollection.filter( (content) => content.quizId === req.body.gameid );
-            //  we check if it exist and if id does we register the game
-            if (theParticularQuiz.length > 0) {
-              console.log(theParticularQuiz, "check for it level");
+  // adminModel.findOne({ adminUserName: req.body.username }, (err, result) => {
+  //   if (err) {
+  //     res.send({ message: "an error occured", status: false });
+  //   } else {
+  //     if (result !== null) {
+  //       console.log(result)
+  //       let adminId = result._id 
+  //       // result gotten is used to find all the quiz collection made by the amin logining in
+  //       quizModel.find({ adminId: result._id }, (err, quizCollection) => {
+  //         // we then now search if the quiz id coming is owned by the admin
+  //         console.log(quizCollection);
+  //         if (quizCollection.length > 0) {
+  //           // we look for the particular quiz
+  //           let theParticularQuiz = quizCollection.filter( (content) => content.quizId === req.body.gameid );
+  //           //  we check if it exist and if id does we register the game
+  //           if (theParticularQuiz.length > 0) {
+  //             console.log(theParticularQuiz, "check for it level");
 
-              // we try to find the orginal game with that we  get to look at the last game created and split the
-              // quizIdNumberPlayed pin it can only be played 5 times
-              playerModel.find({ quizId: theParticularQuiz[0]._id }, (err, allplayed) => {
-                console.log(allplayed,"++++++++++---------------")
-                  let check = [];
-                  let status;
-                  let gameRegistrationSchema = {
-                    adminId: adminId,
-                    quizId: theParticularQuiz[0]._id,
-                    // this is used to check the number of times the game is being played
-                    quizIdNumberPlayed: theParticularQuiz[0]._id + 1,
-                    players: [],
-                    result: [],
-                    state: req.body.state,
-                    class:theParticularQuiz[0].class,
-                    level: "", 
-                    ranking:[],
-                    month:0,
-                    year: 0,
-                    day: 0,
-                  };
-                  let turnTo = 0
-                  if (err) {
-                    res.send({ message: "an error occured", status: false });
-                  } else {
-                    // we check if it has been registerd with that quizid before
-                    // if it has
-                    if (allplayed.length > 0) {
-                      check = allplayed[allplayed.length - 1].quizIdNumberPlayed.split("");
-                        turnTo = allplayed[0].quizId + (Number(check[check.length - 1]) + 1);
-                        console.log(turnTo, "+++++++++")
-                         gameRegistrationSchema.quizIdNumberPlayed = String(turnTo)
-                    } else {
+  //             // we try to find the orginal game with that we  get to look at the last game created and split the
+  //             // quizIdNumberPlayed pin it can only be played 5 times
+  //             playerModel.find({ quizId: theParticularQuiz[0]._id }, (err, allplayed) => {
+  //               console.log(allplayed,"++++++++++---------------")
+  //                 let check = [];
+  //                 let status;
+  //                 let gameRegistrationSchema = {
+  //                   adminId: adminId,
+  //                   quizId: theParticularQuiz[0]._id,
+  //                   // this is used to check the number of times the game is being played
+  //                   quizIdNumberPlayed: theParticularQuiz[0]._id + 1,
+  //                   players: [],
+  //                   result: [],
+  //                   state: req.body.state,
+  //                   class:theParticularQuiz[0].class,
+  //                   level: "", 
+  //                   ranking:[],
+  //                   month:0,
+  //                   year: 0,
+  //                   day: 0,
+  //                 };
+  //                 let turnTo = 0
+  //                 if (err) {
+  //                   res.send({ message: "an error occured", status: false });
+  //                 } else {
+  //                   // we check if it has been registerd with that quizid before
+  //                   // if it has
+  //                   if (allplayed.length > 0) {
+  //                     check = allplayed[allplayed.length - 1].quizIdNumberPlayed.split("");
+  //                       turnTo = allplayed[0].quizId + (Number(check[check.length - 1]) + 1);
+  //                       console.log(turnTo, "+++++++++")
+  //                        gameRegistrationSchema.quizIdNumberPlayed = String(turnTo)
+  //                   } else {
 
-                      status = false;
-                    }
+  //                     status = false;
+  //                   }
 
-                    let quizGameRegistration = new playerModel(gameRegistrationSchema);
-                    console.log(gameRegistrationSchema)
-                    if (status) {
-                      res.send({ message: "Game limit reached", staus: false });
-                    } else {
-                      quizGameRegistration.save((err, details) => {
-                        if (err) {
-                        } else {
-                          const adminCode = jwtId.sign(
-                            {
-                              adminStatus: true,
-                              question: theParticularQuiz[0].quizSubject,
-                              quizID: theParticularQuiz[0]._id,
-                              quizIdNumberPlayed: details.quizIdNumberPlayed,
-                              mode:req.body.mode
-                            },
-                            process.env.GS,
-                            {
-                              expiresIn: "7d",
-                            }
-                          );
-                          res.send({
-                            message: "valid login",
-                            status: true,
-                            // this is used to kno if the admin is logged in if the admin is logged in 
-                            // then players should be able to if not players shouldn't be able to
-                           checkifAdminLogin: details.quizIdNumberPlayed,
-                            adminStatusId: adminCode,
-                          });
-                        }
-                      });
-                    }
-                  }
-                }
-              );
-            } else {
-              res.send({message:"Invalid quiz Id", status:false})
-            }
-          } else {
-            res.send({ message: "Invalid Identification", status: false });
-          }
-        });
-      } else {
-        res.send({ message: "Username doesn't exist", status: false });
-      }
-    }
-  });
+  //                   let quizGameRegistration = new playerModel(gameRegistrationSchema);
+  //                   console.log(gameRegistrationSchema)
+  //                   if (status) {
+  //                     res.send({ message: "Game limit reached", staus: false });
+  //                   } else {
+  //                     quizGameRegistration.save((err, details) => {
+  //                       if (err) {
+  //                       } else {
+  //                         const adminCode = jwtId.sign(
+  //                           {
+  //                             adminStatus: true,
+  //                             question: theParticularQuiz[0].quizSubject,
+  //                             quizID: theParticularQuiz[0]._id,
+  //                             quizIdNumberPlayed: details.quizIdNumberPlayed,
+  //                             mode:req.body.mode
+  //                           },
+  //                           process.env.GS,
+  //                           {
+  //                             expiresIn: "7d",
+  //                           }
+  //                         );
+  //                         res.send({
+  //                           message: "valid login",
+  //                           status: true,
+  //                           // this is used to kno if the admin is logged in if the admin is logged in 
+  //                           // then players should be able to if not players shouldn't be able to
+  //                          checkifAdminLogin: details.quizIdNumberPlayed,
+  //                           adminStatusId: adminCode,
+  //                         });
+  //                       }
+  //                     });
+  //                   }
+  //                 }
+  //               }
+  //             );
+  //           } else {
+  //             res.send({message:"Invalid quiz Id", status:false})
+  //           }
+  //         } else {
+  //           res.send({ message: "Invalid Identification", status: false });
+  //         }
+  //       });
+  //     } else {
+  //       res.send({ message: "Username doesn't exist", status: false });
+  //     }
+  //   }
+  // });
 };
 
 const userGamePinVerification = (req, res) => {

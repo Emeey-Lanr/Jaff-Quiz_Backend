@@ -26,14 +26,18 @@ class AdminValidation {
     static async emailVerification(token) {
         try {
             const verifyToken = jwt.verify(token, process.env.Secret)
-             const findUser = await adminModel.findOne({ id: verifyToken.userid }) 
+         
+             const findUser = await adminModel.findOne({ _id: verifyToken.userid }) 
+
             if (findUser === null) {
                 return new Error("Invalid Token") 
             }
+              
             return findUser
 
-            
+          
         } catch (error) {
+            consoel.log(error)
             return new Error("token malformed")
         }
         
@@ -41,9 +45,10 @@ class AdminValidation {
     }
     static async loginVerification(adminUserName, password) {
         try {
-              const findUser = await adminModel.findOne({ adminUserName })
+        
+              const findUser = await adminModel.findOne({ adminUserName:adminUserName })
         if (findUser === null) {
-            return new Error("Invalid Username")
+            return new Error("Invalid Login Credentials")
         }
         const validatePassword = await bcrypt.compare(password, findUser.adminPassword)
         if (!validatePassword) {
@@ -71,9 +76,40 @@ class AdminValidation {
         } catch (error) {
             
         }
-  
-
         
+
+    }
+
+    static async addQuestionValidation(quizQuestion,  quizId, subjectId, assignedMark, replaceAdd, subjectName) {
+    try {
+        const quiz = await quizModel.findOne({ _id: quizId })
+        console.log(quiz, "here is quiz", replaceAdd, quizQuestion, subjectId)
+        if (quiz === null) {
+            return new Error("Can't find quiz")
+        }
+         if (assignedMark > 1 && assignedMark !== 1) {
+          quiz.quizSubject[subjectId].subjectMark = assignedMark;
+        }
+   console.log(quiz);
+        if (replaceAdd === 0) {
+           
+            quizQuestion.map((question, id) => {
+                quiz.quizSubject[subjectId].questions.push(question);
+            });
+          
+        } else if (replaceAdd === 1) {
+            quiz.quizSubject.map((content, id) => {
+                if (content.quizName === subjectName) {
+                    content.questions = quizQuestion;
+                }
+            });
+        
+        }
+     
+ return quiz
+    } catch (error) {
+    return new Error(error.message)
+    }
     }
 }
 

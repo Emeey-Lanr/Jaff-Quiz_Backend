@@ -9,7 +9,7 @@ class SearchResult {
             return new Error("no user found")
         }
         const userFound = admin.filter(
-          (admins, _id) =>
+          (admins, id) =>
             admins.adminUserName
               .toUpperCase()
               .indexOf(name.toUpperCase()) > -1
@@ -17,8 +17,10 @@ class SearchResult {
         if (userFound.length < 1) {
             return new Error("no user found")
         }
+        console.log(userFound, ":LKJHGF")
         return userFound
     } catch (error) {
+        console.log(error)
        return new Error("an error occured")
     }
     }
@@ -50,6 +52,10 @@ class SearchResult {
                 return new Error("an error occured")
             }
             const collectResult = await collectionFunction(quizId)
+            if (collectResult instanceof Error) {
+                return new Error(collectResult.message)
+            }
+            console.log(quiz, acessPass);
             if (locked === "yes") {
                 if (quiz.quizResultAcessPassword !== acessPass) {
                   return new Error("Invalid password")   

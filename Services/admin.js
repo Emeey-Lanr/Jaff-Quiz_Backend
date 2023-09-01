@@ -9,6 +9,7 @@ const ShortUniqueId = require("short-unique-id");
 const quizModel = require("../models/QuizQuestionModel")
 const cloudinary = require("cloudinary").v2;
 
+
 cloudinary.config({
   cloud_name: process.env.Cloudinary_cloud_name,
   api_key: process.env.Cloudinary_api_key,
@@ -27,13 +28,12 @@ class Admin {
             const password = await bcrypt.hash(payload.adminPassword, 10)
             payload.adminPassword = password
 
-            console.log(password, payload)
         
             let newAdmin = new adminModel(payload)
             const createNewAdmin = await newAdmin.save()
             const token =  jwt.sign({ userid: createNewAdmin.id }, process.env.Secret, { expiresIn: "1h" })
             // return token
-            console.log(token, createNewAdmin)
+          
             const sendMail = await AdminEmail.signup(token, createNewAdmin.adminEmail)
             if (sendMail instanceof Error) {
                 return new Error("unable to send Email")
@@ -117,6 +117,7 @@ class Admin {
     }
     static async uploadImage(imageUrl, admindId) {
         try {
+    
                 const uid = new ShortUniqueId();
         const uidWithTimestamp = uid.stamp(10);
         const uploadImage = await cloudinary.uploader.upload(imageUrl, { public_id: uidWithTimestamp });
@@ -192,13 +193,16 @@ class Admin {
         
     }
     static async editQuestion(payload) {
-        const { collectionId, subjectName } = payload;
+        const { collectionId, subjectId, questionId, editedQuestion } = payload;
         try{
-            const findQuestion = await quizModel.find({ _id: collectionId })
-            const subject = findQuestion.quizSubject.find((subject) => subject.quizName === subjectName)
-            subject.question[questionId] = ""
-            const updateEdit = await quizModel.findOneAndUpdate({ _id: collectionId }, findQuestion)
-      
+            const findQuestion = await quizModel.findOne({ _id: collectionId })
+  
+          if (findQuestion === null) {
+           return new Error("can find subject")
+            }
+                      findQuestion.quizSubject[subjectId].questions[questionId] = editedQuestion
+            const saveEditQuestion = await quizModel.findByIdAndUpdate({ _id: collectionId }, findQuestion)
+            return saveEditQuestion
         }catch(error){
             console.log(error)
         return new Error(error.message)
@@ -233,7 +237,7 @@ class Admin {
                 return new Error("Invalid quizk acess id, can't find quiz")
             }
             quiz.locked = true
-            quiz.quizResultAcessPasword = pass;
+            quiz.quizResultAcessPassword = pass;
             const updateQuiz = await quizModel.findOneAndUpdate({ _id: collectionId }, quiz)
             
 
@@ -309,6 +313,7 @@ class Admin {
     static async checkParticiPants(userToken) {
         try {
             const verifyToken = jwt.verify(userToken, process.env.Secret)
+            
             const players = await playerModel.find({ quizId: verifyToken.quizDataBaseId })
             return players
 

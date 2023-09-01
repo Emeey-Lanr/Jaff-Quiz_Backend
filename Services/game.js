@@ -5,59 +5,57 @@ const quizModel = require("../models/QuizQuestionModel");
 
 class Game {
   static async adminGameLogin(payload) {
-    const { username, state, gameId, mode } = payload;
-    try {
-      const quizGame = await GameValidators.adminGameLogin(
-        username,
-        state,
-        gameId
-      );
-      if (quizGame instanceof Error) {
-        return new Error(quizGame.message);
-      }
-      const newQuizGame = new playerModel(quizGame.game);
-      const createQuizGame = await newQuizGame.save();
-      const token = jwt.sign(
-        {
-          adminStatus: true,
-          question: quizGame.quiz[0].quizSubject,
-          quizID: quizGame.quiz[0]._id,
-          quizIdNumberPlayed: createQuizGame.quizIdNumberPlayed,
-          mode: mode,
-        },
-        process.env.GS,
-        {
-          expiresIn: "7d",
-        }
-      );
-      return { token, numberPlayed: createQuizGame.quizIdNumberPlayed };
-    } catch (error) {
-      return new Error("an error occured");
+    const { username, state, gameid, mode } = payload;
+  try {
+    const adminGameLoginValidator = await GameValidators.adminGameLogin(username, state, gameid)
+    if (adminGameLoginValidator instanceof Error) {
+      return new Error(adminGameLoginValidator.message)
     }
+ 
+    const registerQuiz = await new playerModel(adminGameLoginValidator.data)
+    const createQuiz = await registerQuiz.save()
+    const adminCode = jwt.sign(
+      {
+        adminStatus: true,
+        question: adminGameLoginValidator.quiz.quizSubject,
+        quizID: adminGameLoginValidator.quiz.id,
+        quizIdNumberPlayed: createQuiz.quizIdNumberPlayed,
+        mode: mode,
+      },
+
+      process.env.GS,
+      { expiresIn: "1d" }
+    );
+ return { token: adminCode, numberPlayed: createQuiz.quizIdNumberPlayed };
+  } catch (error) {
+    console.log(error)
+    return new Error("An error occured")
+  }
   }
   static async userGamePinVerification(payload) {
     const {password} = payload
     try {
-      const verification = await GameValidators.userGamePinVerification(password)
-      if (verification instanceof Error) {
-        return new Error(verification.message)
+      const quiz = await GameValidators.userGamePinVerification(password)
+      if (quiz instanceof Error) {
+        return new Error(quiz.message)
       }
-      const quiz = verification.quiz
-      if (verification.quiz.mutliple) {
-        quiz.quizMultiplePassword = quiz.quizMultiplePassword.filter((content) => content !== password)
-        const updateQuiz = await quizModel.findOneAndUpdate({_id:quiz._id}, quiz)
+      if (quiz.currentQuiz.multiple) {
+        quiz.currentQuiz.quizMultiplePassword = quiz.currentQuiz.quizMultiplePassword.filter((content) => content !== password)
+        const updateQuiz = await quizModel.findOneAndUpdate({_id:quiz.currentQuiz.id}, quiz.currentQuiz)
       }
-      const token = jwt.sign(
+      const userpin = jwt.sign(
         {
           adminStatus: false,
-          quizID: quiz._id,
-          adminId: quiz.adminId,
-          subjectToBeDone: quiz.subjectToBePlayedByPlyers,
+          quizID: quiz.currentQuiz.id,
+          adminId: quiz.currentQuiz.adminId,
+          subjectToBeDone:quiz.currentQuiz.subjectToBePlayedByPlyers,
         },
         process.env.GS,
-        { expiresIn: "7h" }
+        { expiresIn: "1d" }
       );
-      return { game: verification.player,token }
+
+      return { userpin, lastGameUniqueId:quiz.gameCreated[quiz.gameCreated.length - 1].quizIdNumberPlayed};
+
     } catch (error) {
       return new Error("an error occured")
     }
@@ -68,8 +66,9 @@ class Game {
       if (verification instanceof Error) {
         return new Error(verification.message)
       }
+      console.log(verification, )
       const updateQuiz = await playerModel.findByIdAndUpdate({_id: verification._id }, verification)
-      
+       console.log(verification.quizIdNumberPlayed, "this is the number played");
       const token = jwt.sign({
         adminStatus: false,
         quizID: payload.quizId,

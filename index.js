@@ -179,6 +179,7 @@ io.on("connection", (socket) => {
      }
     
       playerPlayingDetail.push(playerPlayinSchema)
+      console.log(playerPlayingDetail)
       mark.push(markSchema)
       socket.join(uniqueId.quizId)
       // console.log(playerPlayingDetail, mark)
@@ -187,7 +188,7 @@ io.on("connection", (socket) => {
   // player registration
   socket.on("register", (info) => {
    
-    console.log(info, "++++==")
+    console.log(info, info.uniqueIdentification, "++++==")
     socket.join(info.uniqueIdentification);
     let findTheArrayOfTheGame = playerPlayingDetail.filter((content, id) => content.uniqueId === info.uniqueIdentification)
     console.log(findTheArrayOfTheGame, "findddddd")
@@ -380,7 +381,7 @@ io.on("connection", (socket) => {
           }
         })
        console.log(calculate)
-         console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone);
+        //  console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone);
         io.sockets.to(check[0].uniqueId).emit("showAdminMode1CurrentScore", {
           roomId:check[0].uniqueId,
           subjectDoneIdentification: subjectDoneIdentification,
@@ -433,7 +434,7 @@ io.on("connection", (socket) => {
         });
               
        
-        console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone)
+        // console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone)
         io.sockets.to(check[0].uniqueId).emit("adminMode1SubjectOverall", {
           roomId: check[0].uniqueId,
           ranking: ranking.reverse(),
@@ -768,54 +769,88 @@ socket.on("changeQuestion", (data) => {
   socket.on("completedQuiz", (incomingInfo) => {
     let status = false
     const check = playerPlayingDetail.filter((details) => details.uniqueId === incomingInfo.gameId)
-    const saveResult = () => {
-      if (check.length > 0) {
-        console.log(check[0].uniqueId)
-        io.sockets.to(check[0].uniqueId).emit("openSpinner",{adminId:check[0].uniqueId})
-          playerModel.findOne(
-            { quizIdNumberPlayed: check[0].uniqueId },
-            (err, quiz) => {
-              console.log(quiz);
-              if (err) {
-                status = false;
-              } else {
-                if (quiz !== null) {
-                  
-                  quiz.result = check[0].players
-                  quiz.month = check[0].month
-                  quiz.year = check[0].year
-                  quiz.day = check[0].day
-                  quiz.ranking = check[0].totalRanking
-                  console.log(quiz.result);
-                  // quiz.result = check[0].players;
-                  playerModel.findOneAndUpdate( { quizIdNumberPlayed: check[0].uniqueId }, quiz,(err) => {
-                      if (err) {
-                        let = false;
-                        console.log("unable to save")
-                      } else {
-                        setTimeout(() => {
-                          status = true;
-                          console.log("saved")
-                          playerPlayingDetail.map((content) => {
-                            if (content.uniqueId === check[0].uniqueId) {
-                              content.adminStage = "AdminPage01";
-                            }
-                          });
-                          io.sockets.to(check[0].uniqueId).emit("whenSaved", {
-                            adminId: check[0].uniqueId,
-                            adminPage: "AdminPage01",
-                          });
-                        }, 2000);
-                      }
-                    }
-                  );
-                }
-              }
-            }
-          );
+    const saveResult = async () => {
+      try {
+           if (check.length > 0) {
+             console.log(check[0].uniqueId);
+             io.sockets
+               .to(check[0].uniqueId)
+               .emit("openSpinner", { adminId: check[0].uniqueId });
+             const savePlayerInfo = await playerModel.findOne({
+               quizIdNumberPlayed: check[0].uniqueId,
+             });
+             if (savePlayerInfo === null) {
+             }
+             savePlayerInfo.result = check[0].players;
+             savePlayerInfo.month = check[0].month;
+             savePlayerInfo.year = check[0].year;
+             savePlayerInfo.day = check[0].day;
+             savePlayerInfo.ranking = check[0].totalRanking;
+             savePlayerInfo.result = check[0].players;
+             const updateInfo = await playerModel.findOneAndUpdate(
+               { quizIdNumberPlayed: check[0].uniqueId },
+               savePlayerInfo
+             );
+             setTimeout(() => {
+               status = true;
+               console.log("saved");
+               playerPlayingDetail.map((content) => {
+                 if (content.uniqueId === check[0].uniqueId) {
+                   content.adminStage = "AdminPage01";
+                 }
+               });
+               io.sockets.to(check[0].uniqueId).emit("whenSaved", {
+                 adminId: check[0].uniqueId,
+                 adminPage: "AdminPage01",
+               });
+             }, 1_000);
 
+             // playerModel.findOne(
+             //   { quizIdNumberPlayed: check[0].uniqueId },
+             //   (err, quiz) => {
+             //     console.log(quiz);
+             //     if (err) {
+             //       status = false;
+             //     } else {
+             //       if (quiz !== null) {
+
+             //         quiz.result = check[0].players
+             //         quiz.month = check[0].month
+             //         quiz.year = check[0].year
+             //         quiz.day = check[0].day
+             //         quiz.ranking = check[0].totalRanking
+             //         console.log(quiz.result);
+             //         // quiz.result = check[0].players;
+             //         playerModel.findOneAndUpdate( { quizIdNumberPlayed: check[0].uniqueId }, quiz,(err) => {
+             //             if (err) {
+             //               let = false;
+             //               console.log("unable to save")
+             //             } else {
+             //               setTimeout(() => {
+             //                 status = true;
+             //                 console.log("saved")
+             //                 playerPlayingDetail.map((content) => {
+             //                   if (content.uniqueId === check[0].uniqueId) {
+             //                     content.adminStage = "AdminPage01";
+             //                   }
+             //                 });
+             //                 io.sockets.to(check[0].uniqueId).emit("whenSaved", {
+             //                   adminId: check[0].uniqueId,
+             //                   adminPage: "AdminPage01",
+             //                 });
+             //               }, 2000);
+             //             }
+             //           }
+             //         );
+             //       }
+             //     }
+             //   }
+             // );
+           }
+      } catch (error) {
         
       }
+   
       
      
     }
@@ -1045,12 +1080,15 @@ socket.on("changeQuestion", (data) => {
           content.adminPage = "AdminPage03"
           content.submitted.map((submit) => {
             if (submit.subjectName === check[0].currentSubjectName) {
-              if (findUser.length > 0) {
-                console.log("already submitted")
-              } else {
-                submit.submitted.push({name:data.username})
-                console.log("not submitted")
+              if (findUser.length < 1) {
+                 submit.submitted.push({ name: data.username });
               }
+              // if (findUser.length > 0) {
+              //   console.log("already submitted")
+              // } else {
+              //   submit.submitted.push({name:data.username})
+              //   console.log("not submitted")
+              // }
             }
           })
           content.players.map((player) => {

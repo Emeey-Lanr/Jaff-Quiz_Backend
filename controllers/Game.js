@@ -15,25 +15,26 @@ cloudinary.config({
 
 const adminGameLogin = async (req, res) => {
   console.log(req.body);
-
   try {
-    
     const gameLogin = await Game.adminGameLogin(req.body)
     if (gameLogin instanceof Error) {
+      console.log(gameLogin.message);
       return errorResponse(res, 400, gameLogin.message)
+      
     }
-    res.send({
+   return  res.send({
                             message: "valid login",
                             status: true,
-                            // this is used to kno if the admin is logged in if the admin is logged in 
+                            // this is used to know if the admin is logged in if the admin is logged in 
                             // then players should be able to if not players shouldn't be able to
                            checkifAdminLogin:gameLogin.numberPlayed,
                             adminStatusId: gameLogin.token,
                           });
   } catch (error) {
+    console.log(error)
     return errorResponse(res, 500, "an error occured", false)
   }
-  // we look if that username exist
+  // // we look if that username exist
   // adminModel.findOne({ adminUserName: req.body.username }, (err, result) => {
   //   if (err) {
   //     res.send({ message: "an error occured", status: false });
@@ -146,10 +147,9 @@ const userGamePinVerification = async (req, res) => {
     }
     return res.send({
       message: "success",
-      passId: verifyPin.token,
-      status: true,
-      lastGameUniqueId:
-        verifyPin.game[verifyPin.game.length - 1].quizIdNumberPlayed,
+      passId: verifyPin.userpin,
+       status: true,
+      lastGameUniqueId:verifyPin.lastGameUniqueId
     });
   } catch (error) {
     return res.send({ message: "an error occured", status: false });
@@ -231,6 +231,7 @@ const verifyPlayerPassToken = async (req, res) => {
   try {
     const userToken = req.headers.authorization.split(" ")[1];
     const token =  jwtId.verify(userToken, process.env.GS)
+    console.log(token, "this your token mahn")
      res.send({ message: "success", status: true, userDetail: token });
   } catch (error) {
     res.send({ message: "an error occured", status: false });
@@ -322,7 +323,9 @@ const verifyAdminStatus = async (req, res) => {
   try {
     const id = req.headers.authorization.split(" ")[1];
     const token = jwtId.verify(id, process.env.GS)
+    console.log(token, "na token be this")
     if (token.adminStatus) {
+       console.log(token.quizIdNumberPlayed, "wnetin dey happen");
        res.send({
          status: true,
          adminStatus: token.adminStatus,
@@ -332,12 +335,21 @@ const verifyAdminStatus = async (req, res) => {
          mode: token.mode,
        });
     } else {
-      res.send({
+     
+      const namey = {
         status: true,
         adminStatus: token.adminStatus,
         quizID: token.quizID,
         userDetails: token.playerInfo,
         quizIdNumberPlayedId: token.quizIdNumberPlayed,
+      };
+      console.log(namey,"whalala")
+      res.send({
+        status: true,
+        adminStatus: token.adminStatus,
+        quizID: token.quizID,
+        userDetails: token.playerInfo,
+        quizIdNumberPlayedId: token.quizNumberPlayed,
       });
     }
   } catch (error) {

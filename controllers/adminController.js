@@ -72,18 +72,25 @@ const adminDasboard = async (req, res) => {
   try {
     let adminId = req.headers.authorization.split(" ")[1];
     const admin  = await Admin.adminDasboard(`${adminId}`)
+  
     if (admin instanceof Error) {
+      console.log(admin.message)
       return errorResponse(res, 400, admin.message, false)
     }
+    console.log(admin.ranking,  admin.player[0].result)
 
-  return res.status(200).send({
-                  message: "success", status: true,
-                  adminDetails: admin.admin,
-                  quizDetails: admin.player,
-                  lastQuizheld: admin.order,
-                  ranking:admin.ranking,
-                });
+  return res.send(
+    JSON.stringify({
+      message: "success",
+      status: true,
+      adminDetails: admin.admin,
+      quizDetails: admin.player,
+      lastQuizheld: admin.order,
+      ranking: admin.ranking,
+    })
+  );
   } catch (error) {
+    console.logg(error.message)
     return errorResponse(res, 500, "an error occured", false)
   }
 
@@ -142,7 +149,11 @@ const loadQuizCollection = async (req, res) => {
     if (loadQuiz instanceof Error) {
       return res.status(404).send({ status: true, message:loadQuiz.message });
     }
-    return res.status(200).send({ message: "success",status: true, collections: loadQuiz.collection,
+    return res.send(
+       
+      { message: "success",
+      status: true, 
+      collections: loadQuiz.collection,
             class: loadQuiz.class,
           });
 
@@ -167,28 +178,16 @@ const deleteQuestion = async (req, res) => {
 }
 const editQuestion = async (req, res) => {
   try {
+ console.log(req.body)
     const editQuestion = await Admin.editQuestion(req.body)
-    
+    if (editQuestion instanceof Error) {
+       return errorResponse(res, 400, error.message, false);
+    }
+        return sucessResponse(res, 200, `Edited Succesfully`, false);
   } catch (error) {
     return errorResponse(res, 500, error.message, false )
   }
-  //  quizModel.find({ _id: req.body.collectionId }, (err, result) => {
-  //   if (err) {
-  //     res.send({message:"an error occured", status:false})
-  //   } else {
-  //     if (result !== null) {
-  //       const subject = result.quizSubject.find((subject) => subject.quizName === req.body.subjectName)
-  //       subject.questions[questionId] = "";
-  //       quizModel.findOneAndUpdate({ _id: req.body.collectionId }, result, (err) => {
-  //         if (err) {
-  //           res.send({message:"Unable to edit", status:false})
-  //         } else {
-  //           res.send({message:"Edited Succesfully", status:true})
-  //         }
-  //       })
-  //     }
-  //   }
-  // })
+ 
 }
 const generateMorePassword = async (req, res) => {
   console.log(req.body)
@@ -315,23 +314,12 @@ const checkParticiPants = async (req, res) => {
     if (check instanceof Error) {
       return errorResponse(res, 400, check.message, )
     }
+   return res.send({ message: "succesful", status: true, result: JSON.stringify(check) });
+    console.log(check)
   } catch (error) {
     return errorResponse(res, 500, "an error occured", false)
   }
-  // let userToken = req.headers.authorization.split(" ")[1]
-  // jwt.verify(userToken, process.env.Secret, (err, result) => {
-  //   if (err) {
-  //     res.send({status:false})
-  //   } else {
-  //     playerModel.find({ quizId: result.quizDataBaseId }, (err, quizResult) => {
-  //       if (err) {
-  //         res.send({message:"an error occured", status:false})
-  //       } else {
-  //         res.send({message:"succesful", status:true, result:quizResult})
-  //       }
-  //     });
-  //   }
-  // })
+
   
 }
 
@@ -340,10 +328,11 @@ const deleteQuiz = async (req, res) => {
   try {
     const deleteQuiz = await Admin.deleteQuiz(req.body);
     if (deleteQuiz instanceof Error) {
-      return 
+      return res.send({ message: "unable to delete", status: false });
     }
+    return res.send({ message: "deleted succesfully", status: true });
   } catch (error) {
-    
+    return res.send({ message: "unable to delete", status: false });
   }
 
 

@@ -31,7 +31,7 @@ class AdminEmail {
       "
     >
       <div>
-        <p style="text-align: center; color: #757575; font-family: cursive;">
+        <p style="text-align: center; color: #757575; font-family: sans-serif; font-size:0.8rem;">
           Click on the button below to verify your email
         </p>
         <div
@@ -53,7 +53,7 @@ class AdminEmail {
           >
             <a
               href="http://localhost:3000/verify/${token}"
-              style="color: white; text-decoration: none; font-family: cursive;" 
+              style="color: white; text-decoration: none; font-family: san-serif;" 
               >Verify</a
             >
           </button>

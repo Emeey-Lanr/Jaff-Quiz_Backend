@@ -27,7 +27,7 @@ const adminSignUp = async (req, res) => {
     }
     return res.status(200).send({status:true, message:registerUser.mail})
   } catch (error) {
-    console.log(error)
+
     return errorResponse(res, 500, error.message, false);
   }
  
@@ -43,14 +43,14 @@ const emailVerification = async (req, res) => {
     }
     return res.send({message:"verfied", status:true, adminId:emailTokenVerification})
   } catch (error) {
-    console.log(error)
+ 
     return res.send({message:error.message, status:false})
   }
  
 };
 
 const login =  async (req, res) => {
-  console.log(req.body);
+ 
   try {
     const loginVerification = await Admin.login(req.body.userName, req.body.password)
     if (loginVerification instanceof Error) {
@@ -74,10 +74,10 @@ const adminDasboard = async (req, res) => {
     const admin  = await Admin.adminDasboard(`${adminId}`)
   
     if (admin instanceof Error) {
-      console.log(admin.message)
+   
       return errorResponse(res, 400, admin.message, false)
     }
-    console.log(admin.ranking,  admin.player[0].result)
+  
 
   return res.send(
     JSON.stringify({
@@ -90,7 +90,7 @@ const adminDasboard = async (req, res) => {
     })
   );
   } catch (error) {
-    console.logg(error.message)
+   
     return errorResponse(res, 500, "an error occured", false)
   }
 
@@ -144,7 +144,7 @@ const viewQuiz = async (req, res) => {
 const loadQuizCollection = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
-    console.log("here")
+
     const loadQuiz = await Admin.loadQuizColection(token);
     if (loadQuiz instanceof Error) {
       return res.status(404).send({ status: true, message:loadQuiz.message });
@@ -178,7 +178,7 @@ const deleteQuestion = async (req, res) => {
 }
 const editQuestion = async (req, res) => {
   try {
- console.log(req.body)
+
     const editQuestion = await Admin.editQuestion(req.body)
     if (editQuestion instanceof Error) {
        return errorResponse(res, 400, error.message, false);
@@ -190,7 +190,7 @@ const editQuestion = async (req, res) => {
  
 }
 const generateMorePassword = async (req, res) => {
-  console.log(req.body)
+
   try {
      const generate = await Admin.generateMorePassword(req.body)
     if (generate instanceof Error) {
@@ -233,7 +233,7 @@ const removeQuizAcessPassword = async (req, res) => {
 
 const deleteSpecificQuizCollection = async (req, res) => {
   try {
-    console.log("delete")
+  
     const deleteQuiz = await Admin.deleteSpecificQuizCollection(req.body)
     if (deleteQuiz instanceof Error) {
       return errorResponse(res, 400, deleteQuiz.message, false)
@@ -257,7 +257,7 @@ const generateTokenForQuiz = (req, res) => {
 const getSpecificQuiz = async (req, res) => {
   try {
     const incomingToken = req.headers.authorization.split(" ")[1];
-    console.log(incomingToken, "kjhgfds")
+
     const getQuiz = await Admin.getSpecificQuiz(incomingToken)
     if (getQuiz instanceof Error) {
            return errorResponse(res, 400, getQuiz.message, false);
@@ -291,7 +291,7 @@ const uploadImageForQuiz = (req, res) => {
 
 const addQuestion = async (req, res) => {
   try {
-   console.log("hehhjkjhgfr")
+  
     const add = await Admin.addQuestion(req.body)
 
     if (add instanceof Error) {
@@ -315,7 +315,7 @@ const checkParticiPants = async (req, res) => {
       return errorResponse(res, 400, check.message, )
     }
    return res.send({ message: "succesful", status: true, result: JSON.stringify(check) });
-    console.log(check)
+
   } catch (error) {
     return errorResponse(res, 500, "an error occured", false)
   }

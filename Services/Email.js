@@ -61,11 +61,11 @@ class AdminEmail {
       </div>
     </div>`,
            };
-            console.log(email)
+          
          const sendMail =  await transporter.sendMail(mailOptions)
             
         } catch (error) {
-            console.log(error)
+        
          return new Error(error.message)   
         }
         
@@ -128,7 +128,7 @@ class AdminEmail {
       </div>
     </div>`,
        };
-       console.log(email);
+    
        const sendMail = await transporter.sendMail(mailOptions);
     } catch (error) {
       

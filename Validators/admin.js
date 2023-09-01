@@ -6,7 +6,7 @@ class AdminValidation {
     static async signup(body) {
          const { adminEmail, adminUserName } = body;
         try {
-            console.log(adminEmail, adminUserName)
+           
             const checkIfEmailExist = await adminModel.findOne({ adminEmail })
             if (checkIfEmailExist !== null) {
                 return new Error("Email already exist")
@@ -83,14 +83,14 @@ class AdminValidation {
     static async addQuestionValidation(quizQuestion,  quizId, subjectId, assignedMark, replaceAdd, subjectName) {
     try {
         const quiz = await quizModel.findOne({ _id: quizId })
-        console.log(quiz, "here is quiz", replaceAdd, quizQuestion, subjectId)
+        
         if (quiz === null) {
             return new Error("Can't find quiz")
         }
          if (assignedMark > 1 && assignedMark !== 1) {
           quiz.quizSubject[subjectId].subjectMark = assignedMark;
         }
-   console.log(quiz);
+  
         if (replaceAdd === 0) {
            
             quizQuestion.map((question, id) => {

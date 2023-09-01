@@ -7,13 +7,13 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const PORT = process.env.PORT;
 const URI = process.env.URI;
-console.log(URI)
+
 const server = app.listen(PORT, async () => {
    try {
      const connectToDb = await mongoose.connect(`${URI}`);
     console.log(`a user has connected at Port ${PORT}`);
    } catch (error) {
-     console.log(error);
+   
    }
 
 });
@@ -45,7 +45,7 @@ io.on("connection", (socket) => {
   // checks if the admin is logged in cause users shouldn't be able to play game if the admin is not looged in
   socket.on("ifAdminIsLoggedIn", (ifLoggedIn) => {
     adminLoggedIn.push(ifLoggedIn)
-    console.log(adminLoggedIn)
+  
 
   });
   socket.join("yes")
@@ -72,13 +72,12 @@ io.on("connection", (socket) => {
           stage: 1,
           roomId: checkIFIdExist[0].uniqueId,
         });
-        console.log("yes stage 1")
+        // stage 3
+       
         
       } else if (checkIFIdExist[0].adminPage === "AdminPage02" && checkIFIdExist[0].totalCurrentSubject.length > 0) {
         let currentSubject = checkIFIdExist[0]
         // question stage, you have to send the the time of that particular subject
-        
-        console.log(checkIFIdExist[0].currentSubject);
        io.sockets.in(uniqueId.quizId).emit("currentPage",
         {loading: false, 
           adminPage: checkIFIdExist[0].adminPage,
@@ -87,7 +86,8 @@ io.on("connection", (socket) => {
           roomId: checkIFIdExist[0].uniqueId,
           stateLoadingQuestion:true,
          });
-        console.log("stage 2")
+        // stage 2
+  
       } else if (checkIFIdExist[0].adminPage === "AdminPage03") {
         // a particular subject overall
         io.sockets.in(uniqueId.quizId).emit("currentPage",
@@ -97,7 +97,8 @@ io.on("connection", (socket) => {
             stage: 3,
             roomId: checkIFIdExist[0].uniqueId
           })
-        console.log('stage 3')
+        // stage 3
+   
       } else if (checkIFIdExist[0].adminPage === "AdminPage04") {
         // all subjects total
          io.sockets.in(uniqueId.quizId).emit("currentPage", {
@@ -174,29 +175,27 @@ io.on("connection", (socket) => {
           day: Number(String(uniqueId.date).split("-")[2].split("T")[0]),
           totalRanking:[]
         };
-        console.log()
+  
         
      }
     
       playerPlayingDetail.push(playerPlayinSchema)
-      console.log(playerPlayingDetail)
+
       mark.push(markSchema)
       socket.join(uniqueId.quizId)
-      // console.log(playerPlayingDetail, mark)
+
     }
   });
   // player registration
   socket.on("register", (info) => {
    
-    console.log(info, info.uniqueIdentification, "++++==")
+   
     socket.join(info.uniqueIdentification);
     let findTheArrayOfTheGame = playerPlayingDetail.filter((content, id) => content.uniqueId === info.uniqueIdentification)
-    console.log(findTheArrayOfTheGame, "findddddd")
+
     if(findTheArrayOfTheGame.length > 0){
-    let checkIFUserExist = findTheArrayOfTheGame[0].players.filter((players, id) => players.playerName === info.userDetails.playerName)
-    if (checkIFUserExist.length > 0) {
-      console.log("user exist")
-    } else {
+      let checkIFUserExist = findTheArrayOfTheGame[0].players.filter((players, id) => players.playerName === info.userDetails.playerName)
+      if(checkIFUserExist.length < 1){
       playerPlayingDetail.map((content, id) => {
         if (content.uniqueId === info.uniqueIdentification) {
           content.players.push(info.userDetails);
@@ -204,16 +203,13 @@ io.on("connection", (socket) => {
       })
 
       findTheArrayOfTheGame[0].players.map((user, id) => {
-        console.log(user, "+_)(*&^%$JHGFD")
+    
       })
      
       
-        console.log(findTheArrayOfTheGame, "**=-=**");
        socket.to(info.uniqueIdentification).emit("playersJoinings", { players: findTheArrayOfTheGame[0].players, adminPage:findTheArrayOfTheGame[0].adminPage })
       io.sockets.in(info.uniqueIdentification).emit("showThatYouJoinedAlso", { players: findTheArrayOfTheGame[0].players, adminPage:findTheArrayOfTheGame[0].adminPage} )
     }
-  }else{
-    console.log("can't find player box")
   }
 
   });
@@ -238,11 +234,10 @@ io.on("connection", (socket) => {
              if (content.allQuizIndex === -1) {
                  content.allQuizIndex = data.allQuestionLength - 1
              }
-             if (gameStatus.length > 0) {
-               console.log("subject alreday exist")
-             } else {
-               content.gameStatus.push({ name: data.currentSubjectName , status:false});
+             if (gameStatus.length < 1) {
+                  content.gameStatus.push({ name: data.currentSubjectName , status:false});
              }
+             
              content.players.map((players) => {
                players.subjectToBeDone.map((subject) => {
                  if (subject.quizName === data.currentSubjectName) {
@@ -256,7 +251,7 @@ io.on("connection", (socket) => {
            }
        
          });
-        console.log(check[0], "this is mode 1")
+      
         const questionToBeAnsweredFunction = () => {
           return {
             currentQuestion:
@@ -321,56 +316,24 @@ io.on("connection", (socket) => {
   socket.on("submittedAnswer", async(data)=>{
 
     if (data.currentSubject !== "" && data.name !== "" && data.roomId !== "" && data.score !== -1) {
-      console.log(data, "this your answer")
-      // const checkMarkBox = mark.find((content)=> content.id === data.roomId)
-      // // const players = []
-      // const IfPlayerExist = checkMarkBox.players .filter((playerName) => playerName.name === data.name)
-      // if (IfPlayerExist.length === 0) {
-      //   // players.push(data)
-      //   checkMarkBox.players.push(data)
-      // }
-      // // console.log(checkMarkBox,"++++++++++++++++++++++++++++++++++++++++")
-      //   const  check = playerPlayingDetail.filter((content, id) => content.uniqueId === players[i].roomId)
-      // for (let i = 0; i <  checkMarkBox.players.length; i++){
-      //   let check = playerPlayingDetail.filter((content, id) => content.uniqueId === checkMarkBox.players[i].roomId)
-      //   if (check.length > 0) {
-      //     let findGameRoom = playerPlayingDetail.find((content) => content.uniqueId === checkMarkBox.players[i].roomId)
-      //     const currentPlayer = findGameRoom.players.find((player) => player.playerName === checkMarkBox.players[i].name)
-      //     currentPlayer.subjectToBeDone.map((subject, id) => {
-      //       if (subject.quizName === checkMarkBox.players[i].currentSubject) {
-      //         subjectToBeDoneIdentification = id
-      //         subject.score = 0
-      //         currentPlayer.subjectToBeDone[id].questions[check[0].currentGameIndex] = data.score
-      //         subject.score = subject.questions.reduce((total, score)=> total + score, 0)
-              
-      //       }
-      //     })
-       
-      //    checkMarkBox.players.splice(i, 1)
-      //     i--;
-      //   }
-      // }
-      // console.log(playerPlayingDetail[0].players[0].subjectToBeDone, playerPlayingDetail[0].players[1].subjectToBeDone);
-      // console.log(checkMarkBox, "when it's empty")
+ 
       let check = playerPlayingDetail.filter((content, id) => content.uniqueId === data.roomId)
-      // let currentScore = 
+  
       let subjectDoneIdentification = 0
       if (check.length > 0) {
         
         const calculate = playerPlayingDetail.map((content) => {
           if (content.uniqueId === data.roomId) {
-            console.log(content.currentGameIndex)
+    
             content.players.map((player) => {
               if (player.playerName === data.name) {
 
                 player.subjectToBeDone.map((subject,id) => {
                   if (subject.quizName === data.currentSubject) {
                     subjectDoneIdentification = id
-                    // subject.score = 0;
+                   
               return   player.subjectToBeDone[id].questions[check[0].currentGameIndex] = data.score
-                    // subject.questions.map((score) => {
-                    //   subject.score += score
-                    // })
+                   
                     
                   }
                
@@ -380,8 +343,7 @@ io.on("connection", (socket) => {
             })
           }
         })
-       console.log(calculate)
-        //  console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone);
+   
         io.sockets.to(check[0].uniqueId).emit("showAdminMode1CurrentScore", {
           roomId:check[0].uniqueId,
           subjectDoneIdentification: subjectDoneIdentification,
@@ -397,7 +359,7 @@ io.on("connection", (socket) => {
 
 
   socket.on("changedToNextQuestionOrSubjectOverallAdminMode1", async (data) => {
-    console.log(data)
+  
      const check = playerPlayingDetail.filter((content, id) => content.uniqueId === data.roomId)
     if (check.length > 0) {
       let subjectName =check[0].currentSubjectName
@@ -434,7 +396,7 @@ io.on("connection", (socket) => {
         });
               
        
-        // console.log(check[0].players[0].subjectToBeDone, check[0].players[1].subjectToBeDone)
+
         io.sockets.to(check[0].uniqueId).emit("adminMode1SubjectOverall", {
           roomId: check[0].uniqueId,
           ranking: ranking.reverse(),
@@ -484,11 +446,11 @@ io.on("connection", (socket) => {
   
 
   socket.on("switchToStart", (start) => {
-    console.log(start.currentSubject, "this is start")
+ 
         let lookForThatArray = playerPlayingDetail.filter((content) => content.uniqueId === start.roomId)
 
         let check = lookForThatArray[0].gameStatus.filter((status) => status.name === start.currentSubject)
-        console.log(check[0])
+        
 
     const changeDetails = () => {
           playerPlayingDetail.map((content, id) => {
@@ -504,41 +466,36 @@ io.on("connection", (socket) => {
                 content.allQuizIndex = start.allQuizIndex;
               }
 
-              console.log(content, "LKjhgfdsasdfghjkllkjfds");
+              
               let checkNoToAddAgain = content.gameStatus.filter(
                 (subjectName) => subjectName.name === start.currentSubject
               );
-              if (checkNoToAddAgain.length > 0) {
-                console.log("can't add");
-              } else {
-                content.gameStatus.push({
-                  name: start.currentSubject,
-                  status: false,
-                });
-                console.log(content.gameStatus);
+              if (checkNoToAddAgain.length < 1) {
+                 content.gameStatus.push({
+                   name: start.currentSubject,
+                   status: false,
+                 });
               }
+             
             }
           });
           playerPlayingDetail.map((content, id) => {
             if (content.uniqueId === start.roomId) {
-              console.log(content.players, "jdjhgfdfghjoiuyt");
+           
               content.players.map((players) => {
                 players.subjectToBeDone.map((subject) => {
                   if (subject.quizName === start.currentSubject) {
-                    console.log(subject.questions, ":;;;;;;;;;;;;;;;");
-                    // for (let i = 0; i < start.questionToBeAnswered.length; i++) {
-                    //   subject.questions.push(markSchema);
-                    // }
+                    
                     content.totalCurrentSubject.map((question) => {
                       subject.questions.push(question.score);
                     });
-                    console.log(subject.questions, "check----");
+                  
                   }
                 });
               });
             }
           });
-          console.log(start.question);
+         
           socket.to(start.roomId).emit("startGame", {
             adminPage: start.adminPage,
             question: start.question,
@@ -574,19 +531,18 @@ io.on("connection", (socket) => {
   socket.on("submitAnwser", (info) => {
     let check = playerPlayingDetail.filter((content) => content.uniqueId === info.roomId)
     let questionsBox = []
- console.log(info)
-   console.log(check[0])
+ 
     playerPlayingDetail.map((content) => {
       if (content.uniqueId === info.roomId) {
-        // content.assignedMark = info.assignedMark
+        
         content.players.map((players)=>{
           if (players.playerName === info.playerName) {
-            console.log(players.playerName)
+         
             players.subjectToBeDone.map((subject, id) => {
               questionsBox = players.subjectToBeDone.filter((content)=> content.quizName === info.currentSubject)
               if (subject.quizName === content.currentSubject) {
                 subject.questions[check[0].currentGameIndex] = info.currentStatus ? content.currentAssignedMark : 0
-                console.log(subject.questions)
+               
   
               }
             })
@@ -594,8 +550,7 @@ io.on("connection", (socket) => {
         })
       }
     })
-    // questionsBox[0].questions[2] = 2
-    // console.log(questionsBox[0]);
+
    
   
 });
@@ -615,7 +570,7 @@ socket.on("changeQuestion", (data) => {
                  if (nameState.name === check[0].currentSubject) {
                    nameState.status = true;
                  }
-                 console.log(content.players)
+                
                  if (check[0].mode !== 1) {
                     content.players.map((players) => {
                    players.subjectToBeDone.map((subject) => {
@@ -623,7 +578,7 @@ socket.on("changeQuestion", (data) => {
                           subject.score = 0
                              subject.questions.map((scores) => {
                                subject.score += Number(scores)
-                               console.log(subject.score, scores, subject.questions)
+                              
                               
                          }) 
                        
@@ -644,18 +599,13 @@ socket.on("changeQuestion", (data) => {
                    if (subject.quizName === check[0].currentSubject) {
                      currentGameIndex = id
                      ranking = content.players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score)
-                    //  ranking.map((content, id) => {
-                    //    console.log(content.subjectToBeDone)
-                    //  })
-                    //  console.log(ranking.subjectToBeDone, id)
+                   
                    }
                  });
                });
              }
             })
-             console.log(check[0])
-            //  socket.to(data.roomId)
-            console.log(ranking, "this is the ranking")
+      
              io.sockets.to("yes").emit("changeToVictoryPage", { adminStage: check[0].adminPage, playerRanking:ranking.reverse(), currentIndex:currentGameIndex, currentSubject:check[0].currentSubject})
             
            
@@ -681,41 +631,16 @@ socket.on("changeQuestion", (data) => {
     
 })
   
-// socket.on("alertSubmitOrNext", (data) => {
-//     const check = playerPlayingDetail.filter((id) => id.uniqueId === data.gameId)
-//     console.log(check[0])
-//     if (check.length > 0) {
-//       if (check[0].allQuizIndex === check[0].gameStatus.length - 1) {
-//         // alertSubmit
-//         console.log("no")
-//         io.sockets.to(check[0].uniqueId).emit("alertUserToSubmit", {info:check[0].uniqueId})
-//       } else {
-//         playerPlayingDetail.map((game, id) => {
-//           if (game.uniqueId === data.gameId) {
-//             game.adminPage = "AdminPage01";
-//           }
-//         });
-//         io.sockets
-//           .to(check[0].uniqueId)
-//           .emit("changePageToNextSubject", { adminId: check[0].uniqueId });
-//       }
-//     }
-// })
+
 
   socket.on("nextSubjectOrOverallResult", (data) => {
     if (data.gameId !== "") {
-      console.log(data)
+    
       const check = playerPlayingDetail.filter((id) => id.uniqueId === data.gameId)
       if (check.length > 0) {
         if (check[0].allQuizIndex === check[0].gameStatus.length - 1) {
           
-          // const user = playerPlayingDetail.find((content) => content.rommId === data.rommId)
-          // user.players.map((content) => {
-          //   const total = content.subjectToBeDone.reduce((total, score) => {
-          //   return  total.score + score.score
-          //   }, 0)
-          //   console.log(total)
-          // })
+         
           const clalculatedTotalScore = playerPlayingDetail.map((roomId) => {
             if (roomId.uniqueId === data.gameId) {
               roomId.players.map((player) => {
@@ -723,16 +648,15 @@ socket.on("changeQuestion", (data) => {
                 player.subjectToBeDone.map((subject) => {
                   player.totalScore += Number(subject.score);
                 });
-                // const totalCalculated = player.subjectToBeDone.reduce((total, score) => total.score + score.score, 0)
-                // player.totalScore += Number(totalCalculated)
+              
               })
           
             }
             return roomId
            
-            // return player
+           
           })
-          console.log(check[0].players)
+         
           const overallResult = check[0].players.sort((a, b) => b.totalScore - a.totalScore)
           let rank  = 1
           for (let i = 0; i < overallResult.length; i++){
@@ -772,7 +696,7 @@ socket.on("changeQuestion", (data) => {
     const saveResult = async () => {
       try {
            if (check.length > 0) {
-             console.log(check[0].uniqueId);
+           
              io.sockets
                .to(check[0].uniqueId)
                .emit("openSpinner", { adminId: check[0].uniqueId });
@@ -793,7 +717,7 @@ socket.on("changeQuestion", (data) => {
              );
              setTimeout(() => {
                status = true;
-               console.log("saved");
+             
                playerPlayingDetail.map((content) => {
                  if (content.uniqueId === check[0].uniqueId) {
                    content.adminStage = "AdminPage01";
@@ -805,47 +729,7 @@ socket.on("changeQuestion", (data) => {
                });
              }, 1_000);
 
-             // playerModel.findOne(
-             //   { quizIdNumberPlayed: check[0].uniqueId },
-             //   (err, quiz) => {
-             //     console.log(quiz);
-             //     if (err) {
-             //       status = false;
-             //     } else {
-             //       if (quiz !== null) {
-
-             //         quiz.result = check[0].players
-             //         quiz.month = check[0].month
-             //         quiz.year = check[0].year
-             //         quiz.day = check[0].day
-             //         quiz.ranking = check[0].totalRanking
-             //         console.log(quiz.result);
-             //         // quiz.result = check[0].players;
-             //         playerModel.findOneAndUpdate( { quizIdNumberPlayed: check[0].uniqueId }, quiz,(err) => {
-             //             if (err) {
-             //               let = false;
-             //               console.log("unable to save")
-             //             } else {
-             //               setTimeout(() => {
-             //                 status = true;
-             //                 console.log("saved")
-             //                 playerPlayingDetail.map((content) => {
-             //                   if (content.uniqueId === check[0].uniqueId) {
-             //                     content.adminStage = "AdminPage01";
-             //                   }
-             //                 });
-             //                 io.sockets.to(check[0].uniqueId).emit("whenSaved", {
-             //                   adminId: check[0].uniqueId,
-             //                   adminPage: "AdminPage01",
-             //                 });
-             //               }, 2000);
-             //             }
-             //           }
-             //         );
-             //       }
-             //     }
-             //   }
-             // );
+             
            }
       } catch (error) {
         
@@ -862,17 +746,17 @@ socket.on("changeQuestion", (data) => {
   // Stage 3
   // self Place
   socket.on("startSelfMode", (data) => {
-    console.log(data)
+
     const check = playerPlayingDetail.filter((content) => content.uniqueId === data.roomId)
-    console.log(check)
+   
     const ifSubjectIsDone = check[0].gameStatus.filter((subjectName)=> subjectName.name === data.currentSubjectName)
     const subjectStatus = { name: data.currentSubjectName, status: false }
     
-    console.log(ifSubjectIsDone)
+
 
  let currentSubject = data.allSubjects.filter((content) => content.quizName === data.currentSubjectName)
       const checkSubmitted = check[0].submitted.filter((subject)=>subject.subjectName === data.currentSubjectName)
-      console.log(currentSubject)
+    
       let scoreBox = []
       let subjectMark = 1
     const updateFunction = () => {
@@ -889,18 +773,16 @@ socket.on("changeQuestion", (data) => {
             }
             content.currentAssignedMark = currentSubject[0].subjectMark
             content.gameStatus.push(subjectStatus);
-            if (checkSubmitted.length > 0) {
-              console.log("subject exist")
-            } else {
-              console.log("subject submission done")
-              content.submitted.push({
-                subjectName: data.currentSubjectName,
-                submitted: [],
-              });
+            if (checkSubmitted.length < 1) {
+               content.submitted.push({
+                 subjectName: data.currentSubjectName,
+                 submitted: [],
+               });
             }
+           
             content.players.map((player, id) => {
                player.subjectToBeDone.map((subject)=>{
-                // console.log(subject)
+               
                  if (subject.quizName === data.currentSubjectName) {
                    data.question.map((question, id) => {
                      subject.questions.push(0)
@@ -912,7 +794,7 @@ socket.on("changeQuestion", (data) => {
             })
           }
        });
-      console.log(check[0], "this is the data")
+      
         socket.to(check[0].uniqueId).emit("stage3Question", {
           question: check[0].currentQuestion,
           subjectName: check[0].currentSubjectName,
@@ -928,13 +810,12 @@ socket.on("changeQuestion", (data) => {
         adminId: check[0].uniqueId,
         adminPage:check[0].adminPage
       })
-      
-        // console.log(check[0].currentQuestion, check[0].currentSubjectName,scoreBox, check[0].currenTime)
+
     }
   // this checks if the subject has been answered before so it won't be used again after been answerd
     if (ifSubjectIsDone.length > 0) {
       if (ifSubjectIsDone[0].status) {
-        console.log("play")
+    
         io.to(data.socketId).emit("youcant", {message:"Done, can't play again"});
       } else {
        updateFunction() 
@@ -966,13 +847,13 @@ socket.on("changeQuestion", (data) => {
    const check = playerPlayingDetail.filter((content)=> content.uniqueId === data.roomId)
     if(data.username !== '' && data.currentSubject !== '' && (data.totalScore.length === check[0].currentQuestion.length) && data.roomId !== ''){
       const comingData = data
-   console.log(data,"this is your data")
+  
       const findSubmitted = check[0].submitted.filter((subject)=> subject.subjectName === check[0].currentSubjectName) 
       const findUser = findSubmitted[0].submitted.filter((user)=> user.name === data.username)
       let ranking = []
       let  identification =  0
       if (findUser.length > 0) {
-          console.log("user have submitted already")
+        
            playerPlayingDetail.map((content) => {
           if (content.uniqueId === check[0].uniqueId) {
             content.adminPage = "AdminPage03"
@@ -980,7 +861,7 @@ socket.on("changeQuestion", (data) => {
             player.subjectToBeDone.map((subject, id) => {
          
              if (subject.quizName === content.currentSubjectName) {
-                 console.log(subject.score)
+                
                      identification = id
                     ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score).reverse()
                   }
@@ -1002,7 +883,7 @@ socket.on("changeQuestion", (data) => {
           
           currentSubject.score = data.totalScore.reduce((total, score) => total + score, 0);
              
-          console.log(currentSubject, "that current subject");
+         
         }
 
  
@@ -1027,30 +908,9 @@ socket.on("changeQuestion", (data) => {
             })
           }
         })
-        // playerPlayingDetail.map((content) => {
-        //   if (content.uniqueId === check[0].uniqueId) {
-        //     content.adminPage = "AdminPage03"
-        //     content.players.map((player) => {
-        //       if (player.playerName === data.username) {
-        //         player.subjectToBeDone.map((subject, id) => {
-
-        //           if (subject.quizName === content.currentSubjectName) {
-        //             subject.score = 0;
-        //             data.totalScore.map((score) => {
-        //               subject.score += score
-        //             })
-        //             identification = id
-        //             console.log(subject.score, player.playerName)
-        //             ranking = check[0].players.sort((a, b) => a.subjectToBeDone[id].score - b.subjectToBeDone[id].score).reverse()
-        //           }
-        //         })
-        //       }
-
-        //     })
-        //   }
-        // })
+      
       }
-  console.log(ranking, identification)
+
   io.sockets.to(check[0].uniqueId).emit("stage3PreSubject", {
     ranking:ranking,
     roomId:check[0].uniqueId,
@@ -1070,7 +930,7 @@ socket.on("changeQuestion", (data) => {
   } )
 
   socket.on("selfSubmit",(data)=>{
-    console.log(data)
+
    const check = playerPlayingDetail.filter((content)=> content.uniqueId === data.roomId)
     const findSubmitted = check[0].submitted.filter((subject)=> subject.subjectName === check[0].currentSubjectName) 
     const findUser = findSubmitted[0].submitted.filter((user)=> user.name === data.username)
@@ -1083,12 +943,7 @@ socket.on("changeQuestion", (data) => {
               if (findUser.length < 1) {
                  submit.submitted.push({ name: data.username });
               }
-              // if (findUser.length > 0) {
-              //   console.log("already submitted")
-              // } else {
-              //   submit.submitted.push({name:data.username})
-              //   console.log("not submitted")
-              // }
+            
             }
           })
           content.players.map((player) => {
@@ -1124,7 +979,7 @@ socket.on("changeQuestion", (data) => {
   // Views 
   socket.on("views", (data) => {
    socket.join(data.name)
-    console.log(data)
+  
     const viewBox = []
     const likeBox = []
     data.result.map((content) => {
@@ -1139,10 +994,10 @@ socket.on("changeQuestion", (data) => {
       
       
     })
-    console.log(viewBox, likeBox)
+    
     const check = views.filter((content) => content.name === data.name)
     if (check.length > 0) {
-      console.log("user already exist")
+ 
       let newUserView = []
       check[0].views.map((content) => {
         newUserView = viewBox.filter((quizLike) => quizLike.quizId !== content.quizId)
@@ -1161,7 +1016,7 @@ socket.on("changeQuestion", (data) => {
     } else {
       views.push({ name: data.name, like:likeBox, views:viewBox });
     }
-    console.log(views[0])
+   
     io.sockets.to(data.id).emit("views",{views:views[0].views})
   })
    socket.on("countView", (data) => {
@@ -1169,12 +1024,12 @@ socket.on("changeQuestion", (data) => {
      const check = currentCollection.find((content) => content.name === data.collectionId);
      const currentview = check.views.find((content) => content.quizId === data.quizId );
      currentview.views = currentview.views + 1;
-     console.log(views[0].views);
+    
      io.sockets.to(data.sId).emit("countedViews", {
        views: check.views,
      });
    });
-  socket.on("disconnect", () => {
-    console.log("a userhas disconnected");
-  });
+  // socket.on("disconnect", () => {
+  //   console.log("a userhas disconnected");
+  // });
 }) 

@@ -61,7 +61,7 @@ class GameValidators {
 
        
      } catch (error) {
-       console.log(error)
+     
       return new Error("An error occured")
      }
   }
@@ -104,7 +104,7 @@ class GameValidators {
       return currentQuiz 
       
     } catch (error) {
-      console.log(error.message)
+    
       return new Error("An error occured")
     }
   }

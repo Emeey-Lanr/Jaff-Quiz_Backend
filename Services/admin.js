@@ -19,7 +19,7 @@ class Admin {
     static async signup(payload) {
       
         try {
-              console.log(payload, "Lkjhgfd");
+          
             const validate = await AdminValidation.signup(payload)
             if (validate instanceof Error) {
                 return new Error(validate.message)
@@ -126,7 +126,7 @@ class Admin {
             const updateUser = await adminModel.findByIdAndUpdate({ _id: findUser.id }, findUser)
             
         } catch (error) {
-            console.log(error)
+            
             return new Error(error.message)
         }
         
@@ -173,21 +173,21 @@ class Admin {
             const currentClassCollection = findQuiz.filter((content) => content.class === verifyToken.class);
             return { collection: currentClassCollection, class: verifyToken.class }
         } catch (error) {
-            console.log(error)
+           
             return new Error(error.message)
         }
         
     }
     static async deleteQuestion(payload) {
           const {collectionId, subjectName, questionId} = payload;
-          console.log(payload)
+       
         try {
             const findQuestions = await quizModel.findOne({ _id: collectionId })
            const subject = findQuestions.quizSubject.find((subject) => subject.quizName === subjectName)
             subject.questions = subject.questions.filter((_, id) => id !== questionId)
             const updateQuestion  = await quizModel.findOneAndUpdate({ _id: collectionId }, findQuestions)
         }catch(error){  
-            console.log(error)
+       
          return new Error(error.message)
         }
         
@@ -204,7 +204,7 @@ class Admin {
             const saveEditQuestion = await quizModel.findByIdAndUpdate({ _id: collectionId }, findQuestion)
             return saveEditQuestion
         }catch(error){
-            console.log(error)
+        
         return new Error(error.message)
         }
         
@@ -224,7 +224,7 @@ class Admin {
                
 
         }catch(error){
-            console.log(error)
+          
       return new Error(error.message)
         }
         
@@ -242,7 +242,7 @@ class Admin {
             
 
         }catch(error){
-            console.log(error)
+         
  return new Error(error.message)
         }
     
@@ -261,7 +261,7 @@ class Admin {
 
         } catch (error) {
             return new Error(error.message)
-            console.log(error)
+        
 
         }
         
@@ -272,7 +272,7 @@ class Admin {
             const deleteQuiz = await quizModel.findByIdAndDelete({ _id: quizId })
         
         }catch(error){
-            console.log(error)
+           
  return new Error(error.message)
         }
         
@@ -286,7 +286,7 @@ class Admin {
             }
             return getQuiz
         }catch(error){
-            console.log(error)
+           
           return new Error(error.message)
         }
         
@@ -296,7 +296,7 @@ class Admin {
         const { quizQuestion,  quizId, subjectId, assignedMark, replaceAdd, subjectName} = payload
         try {
             const validate = await AdminValidation.addQuestionValidation(quizQuestion, quizId, subjectId, assignedMark, replaceAdd, subjectName)
-              console.log(validate, "here is question after validation");
+        
             if (validate instanceof Error) {
                 return new Error(validate.message)
             }
@@ -305,7 +305,7 @@ class Admin {
             
 
         }catch(error){
-            console.log(error)
+         
  return new Error(error.message)
         }
         
@@ -318,7 +318,7 @@ class Admin {
             return players
 
         }catch(error){
-            console.log(error)
+        
  return new Error(error.message)
         }
         
@@ -330,7 +330,7 @@ class Admin {
             const deletePlayer = await playerModel.findByIdAndDelete({_id: quizId })
             return { message:"deleted succesfuuly"}
         }catch(error){
-            console.log(error)
+         
          return  new Error(error.message)
         }
         

@@ -28,7 +28,7 @@ class Game {
     );
  return { token: adminCode, numberPlayed: createQuiz.quizIdNumberPlayed };
   } catch (error) {
-    console.log(error)
+
     return new Error("An error occured")
   }
   }
@@ -66,9 +66,9 @@ class Game {
       if (verification instanceof Error) {
         return new Error(verification.message)
       }
-      console.log(verification, )
+      
       const updateQuiz = await playerModel.findByIdAndUpdate({_id: verification._id }, verification)
-       console.log(verification.quizIdNumberPlayed, "this is the number played");
+    
       const token = jwt.sign({
         adminStatus: false,
         quizID: payload.quizId,

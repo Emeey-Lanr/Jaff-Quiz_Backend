@@ -104,13 +104,62 @@ const uploadSettingImage = async (req, res) => {
     if (imageUpload instanceof Error) {
       return res.status(400).send({message:imageUpload.message, status:false})
     }
-    return res.status(200).send({message:"Uploaded succesfuuly", status:true})
+    return res.status(200).send({message:"Uploaded succesfully", status:true})
     
   } catch (error) {
     return res.status(500).send({message:error.message, status:false})
   }
 
 
+}
+
+const sendEmailPasswordResetLink = async (req, res) => {
+  const {adminEmail} = req.body
+  try {
+
+    const verify = await AdminValidation.verifyEmail_Password_Reset(adminEmail)
+    if (verify instanceof Error) {
+      return res.status(400).send({ message: verify.message, status: false })
+      
+    }
+     return res.status(200).send({message:"Email sent! Check inbox or spam for reset link", status:true})
+
+  } catch (error) {
+      return res.status(500).send({ message: error.message, status: false });
+  }
+  
+}
+const verifyEmailResetLink = async(req, res) => {
+  try {
+    
+    const token = req.headers.authorization?.split(" ")[1];
+    const verify = await AdminValidation.verify_Email_Token(token)
+    if (verify instanceof Error) {
+      return    res.status(400).send({ message: verify.message, status: false })
+    }
+
+      return res.status(200).send({message:"Verification Successfull", status:true, email:verify})
+
+  } catch (error) {
+          return res.status(500).send({ message: error.message, status: false });
+  }
+
+  
+}
+const resetForgotPassword = async (req, res) => {
+      const {adminEmail, password} = req.body
+  try {
+
+    const resetPassword = await Admin.resetPassword(adminEmail, password)
+    if (resetPassword instanceof Error) {
+      return res.status(400).send({ message: resetPassword.message, status: false });
+    }
+    return  res.status(200).send({message:"Forgot password reset succesfull", status:true})
+
+  } catch (error) { 
+              return res.status(500).send({ message: error.message, status: false });
+  }
+  
 }
 // /quiz creation
 
@@ -344,12 +393,16 @@ const deleteQuiz = async (req, res) => {
   //   }
   // })
 }
+
 module.exports = {
   adminSignUp,
   emailVerification,
   login,
   adminDasboard,
-uploadSettingImage,
+  uploadSettingImage,
+  sendEmailPasswordResetLink,
+  verifyEmailResetLink,
+ resetForgotPassword,
   // quiz creation
   createQuiz,
   viewQuiz,

@@ -6,6 +6,9 @@ const {
   login,
   adminDasboard,
   uploadSettingImage,
+   sendEmailPasswordResetLink,
+  verifyEmailResetLink,
+ resetForgotPassword,
 
   // admin quiz creation
   createQuiz,
@@ -31,6 +34,9 @@ route.get("/verifyEmail", emailVerification)
 route.post("/adminlogin", login)
 route.get("/admindashboard", adminDasboard)
 route.post("/settingImage", uploadSettingImage)
+route.post("/emailRestPasswordLink", sendEmailPasswordResetLink)
+route.get("/verifyResetLink", verifyEmailResetLink)
+route.put("/resetForgotPassword", resetForgotPassword)
 // quiz creation
 route.post("/createquiz", createQuiz)
 route.post("/saveClassId", viewQuiz);

@@ -2,6 +2,7 @@ const adminModel = require('../models/adminModel')
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 const quizModel = require("../models/QuizQuestionModel")
+const AdminEmail = require("../Services/Email")
 class AdminValidation {
     static async signup(body) {
          const { adminEmail, adminUserName } = body;
@@ -62,6 +63,47 @@ class AdminValidation {
         }
       
         
+    }
+    static async verifyEmail_Password_Reset(adminEmail) {
+        try {
+            const user = await adminModel.findOne({ adminEmail });
+            if (user === null) {
+                return new Error("Invalid Email Address")
+            }
+            
+            const token = jwt.sign({ adminEmail }, `${process.env.Secret}`, { expiresIn: "4hr" })
+            const sendEmail = await AdminEmail.sendVerifactionMail(adminEmail, token)
+            if (sendEmail instanceof Error) {
+                return new Error(sendEmail.message)
+            }
+            let email_message = "Email sent successfully"
+            return email_message
+      
+
+        } catch (err) {
+            return new Error("An error occured")
+        }
+    }
+    static async verify_Email_Token(token){
+        try {
+       
+         const verify  = jwt.verify(token, process.env.Secret)
+          return verify.adminEmail
+    } catch (err) {
+        return new Error("An error occured")
+     }
+    }
+    static async resetPassord  (adminEmail){
+    try{
+        const checkIfUserExist = await adminModel.findOne({ adminEmail })
+        if (checkIfUserExist === null) {
+             return new Error("Invalid Access")
+        }
+        return checkIfUserExist
+
+    } catch (err) {
+        return new Error("An error occurred")
+    }
     }
     static async createQuizValidation(adminId, cclass) {
         try {

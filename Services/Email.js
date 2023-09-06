@@ -135,6 +135,53 @@ class AdminEmail {
     }
      
   }
+  static async sendVerifactionMail(adminEmail, token) {
+    try {
+     
+      var transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: `${process.env.Email}`,
+          pass: `${process.env.EmailPass}`,
+        },
+      });
+      var mailOption = {
+        from: "",
+        to: adminEmail,
+        subject: `Trivy Forgot Password Reset`,
+        text: `hello`,
+        html: ` <div style="width:370px; height: 100%; margin:0 auto; position: fixed; top: 0; display: flex; justify-content: center; font-family: sans-serif;">
+        <div style="width: 95%;">
+             <h1 style="text-align: center; color:#03a26c; ">Trivy</h1>
+        <p style="font-size: 0.9rem; line-height: 30px; width: 100%; margin: 0  auto 10px auto; box-sizing: border-box; text-align: justify; padding: 30px 10px; border-radius: 5px;">
+          You've requested to reset your forgotten password,
+          Click on the button below to rest password.
+          <br>
+          It expires in 4 hrs.
+         </p>
+         <div styele="width:300px; margin:0 auto;">
+           <a href="http://localhost:3000/reset/password/${token}" style=" text-decoration: none; ">
+      
+          <button style="background:#03a26c; text-align:center;font-size: 0.8rem;  border:none; width:100%; height:40px;color:white;">
+            Reset
+   
+          </button>
+              </a>
+         </div>
+      
+
+        </div>
+       
+    </div>`,
+      };
+      
+      const sendMail = await transporter.sendMail(mailOption)
+        let message = "Mail sent succesfully"
+      return message
+    } catch (error) {
+      return new Error("An error occured")
+    }
+  }
   static async createQuizPasswordId(numberToBeGenerated, multiple) {
     try {
       const id = ID.generate(new Date().toJSON());

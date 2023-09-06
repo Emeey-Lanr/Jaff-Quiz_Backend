@@ -131,6 +131,24 @@ class Admin {
         }
         
     }
+
+    static async resetPassword(adminEmail,password) {
+        try {
+            const verify = await AdminValidation.resetPassord(adminEmail)
+            if (verify instanceof Error) {
+                return new Error(verify.message)
+            }
+            
+             const pass = await bcrypt.hash(password, 10);
+            verify.adminPassword = pass;
+            const updatePassword = await adminModel.findOneAndUpdate({ adminEmail }, verify)
+            let message = "Forgot password reset succesfull"
+            return message
+
+        } catch (error) {
+            return new Error("An error occured")
+        }
+    }
     static async createQuiz(payload) {
         const { quizSchema, multiple, numberToBeGenerated } = payload;
         const { adminId, quizId, quizMultiplePassword, quizPin } = quizSchema;

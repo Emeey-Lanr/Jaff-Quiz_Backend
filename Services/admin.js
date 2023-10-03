@@ -56,7 +56,7 @@ class Admin {
             userDetails.adminEmailVerificationStatus = true
             const updateUser = await adminModel.findByIdAndUpdate({_id: userDetails.id }, userDetails)
              
-            const newToken = jwt.sign({ userId: userDetails.id }, process.env.Secret, { expiresIn: "7d" })
+            const newToken = jwt.sign({ userid: userDetails.id }, process.env.Secret, { expiresIn: "7d" })
             return newToken
             
         } catch (error) {
@@ -98,13 +98,26 @@ class Admin {
                 return new Error("Unable to acess")
             }
             const player = await playerModel.find({ adminId: admin._id })
+            const topThree = []
+            const topThreeName = []
+      
             if (player.length > 0) {
                      const order = player[player.length - 1].result.sort((a, b) => a.score - b.score)
                 const ranking = player[player.length - 1].ranking
-                return { admin, player, ranking, order };
+              
+                for (let i = 0; i < ranking.length; i++){
+                    if(i > 2 && i !== 2){
+                        break
+                    }
+                    topThree.push(ranking[i].score)
+                    topThreeName.push(ranking[i].name)
+                   
+                }
+             
+                return { admin, player, ranking, order, topThree, topThreeName };
                 
             } else {
-                return { admin, player:{}, ranking:[], order:[] };
+                return { admin, player:{}, ranking:[], order:[], topThree, topThreeName };
             }
        
          

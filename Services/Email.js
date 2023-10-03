@@ -16,7 +16,7 @@ class AdminEmail {
            var mailOptions = {
              from: "",
              to: email,
-             subject: "User Verification",
+             subject: "Trivy Email Verification",
              text: "That was easy!",
              html: `<div
       style="
@@ -32,7 +32,7 @@ class AdminEmail {
     >
       <div>
         <p style="text-align: center; color: #757575; font-family: sans-serif; font-size:0.8rem;">
-          Click on the button below to verify your email
+          Click on the button below to verify your email, to be able to access your Trivy account. 
         </p>
         <div
           style="
@@ -48,7 +48,8 @@ class AdminEmail {
               border: none;
               background: #03a26c;
               border-radius: 10px;
-              padding: 15px 60px;
+              width:98%;
+              height:40px;
             "
           >
             <a

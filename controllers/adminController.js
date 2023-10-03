@@ -1,10 +1,4 @@
-const adminModel = require("../models/adminModel");
-const nodemailer = require("nodemailer");
-const quizModel = require("../models/QuizQuestionModel");
-const playerModel = require("../models/Playersmodel")
 const jwt = require("jsonwebtoken");
-var ID = require("nodejs-unique-numeric-id-generator");
-var generator = require("generate-password");
 const cloudinary = require("cloudinary").v2;
 const ShortUniqueId = require('short-unique-id')
 const Admin = require('../Services/admin');
@@ -16,8 +10,6 @@ cloudinary.config({
   api_key: process.env.Cloudinary_api_key,
   api_secret: process.env.Cloudinary_api_secret,
 });
-const falseStatus = false;
-const trueStatus = true;
 
 const adminSignUp = async (req, res) => {
   try {
@@ -87,6 +79,8 @@ const adminDasboard = async (req, res) => {
       quizDetails: admin.player,
       lastQuizheld: admin.order,
       ranking: admin.ranking,
+      topThree: admin.topThree,
+      topThreeName:admin.topThreeName
     })
   );
   } catch (error) {

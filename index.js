@@ -13,7 +13,7 @@ const server = app.listen(PORT, async () => {
      const connectToDb = await mongoose.connect(`${URI}`);
     console.log(`a user has connected at Port ${PORT}`);
    } catch (error) {
-   
+      console.log(error.message)
    }
 
 });

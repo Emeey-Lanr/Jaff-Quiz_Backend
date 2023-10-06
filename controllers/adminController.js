@@ -170,6 +170,8 @@ const createQuiz = async (req, res) => {
   
 };
 
+
+// Endpoint Now Useless
 const viewQuiz = async (req, res) => {
   try {
      let quizId =  jwt.sign(
@@ -179,7 +181,8 @@ const viewQuiz = async (req, res) => {
      );
      res.status(200).send({ status: true, identification: quizId });
   } catch (error) {
-    
+      res.status(404).send({ status: false, message:error.message });
+   
   }
  
 };
@@ -187,8 +190,7 @@ const viewQuiz = async (req, res) => {
 const loadQuizCollection = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
-
-    const loadQuiz = await Admin.loadQuizColection(token);
+    const loadQuiz = await Admin.loadQuizColection(token.split("/"));
     if (loadQuiz instanceof Error) {
       return res.status(404).send({ status: true, message:loadQuiz.message });
     }

@@ -197,12 +197,16 @@ class Admin {
         
     }
    
-    static async loadQuizColection(token) {
+    static async loadQuizColection(acessToken) {
         try {
-            const verifyToken = jwt.verify(token, process.env.Secret)
-            const findQuiz = await quizModel.find({ adminId: verifyToken.adminId })
-            const currentClassCollection = findQuiz.filter((content) => content.class === verifyToken.class);
-            return { collection: currentClassCollection, class: verifyToken.class }
+       
+            // acessToken[0] stands for class
+            // acessToken[1] stands for adminId token
+            const {userid} = jwt.verify(acessToken[1], process.env.Secret)
+       
+            const findQuiz = await quizModel.find({ adminId: userid })
+            const currentClassCollection = findQuiz.filter((content) => content.class === acessToken[0]);
+            return { collection: currentClassCollection, class: acessToken[0] }
         } catch (error) {
            
             return new Error(error.message)

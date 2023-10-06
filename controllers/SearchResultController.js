@@ -40,7 +40,7 @@ const getAdminDetails = async (req, res) => {
     return res.send({ Message: "admin found", status: true,  admin });  
     
   } catch (error) {
-    
+        return res.status(404).send({ message:"an error occured", status: false });
   }
 
     
@@ -51,7 +51,7 @@ const searchCollection = async (req, res) => {
   try {
     const searchCollection = await SearchResult.searchCollection(req.body)
     if (searchCollection instanceof Error) {
-       return res.send({ message: searchCollection.message, status: true,});  
+       return res.send({ message: searchCollection.message, status: false});  
     }
     return res.send({ message: "result found", status: true, userFound:searchCollection })
   } catch (error) {

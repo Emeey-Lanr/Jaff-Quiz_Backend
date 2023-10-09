@@ -53,7 +53,7 @@ class AdminEmail {
             "
           >
             <a
-              href="https://trivy-dun.vercel.app/verify/${token}"
+              href="https://trivy-emeey-lanr.vercel.app/verify/${token}"
               style="color: white; text-decoration: none; font-family: san-serif;" 
               >Verify</a
             >
@@ -120,7 +120,7 @@ class AdminEmail {
             "
           >
             <a
-              href="https://trivy-dun.vercel.app/verify/${token}"
+              href="https://trivy-emeey-lanr.vercel.app/verify/${token}"
               style="color: white; text-decoration: none; font-family: cursive;" 
               >Verify</a
             >
@@ -161,7 +161,7 @@ class AdminEmail {
           It expires in 4 hrs.
          </p>
          <div styele="width:300px; margin:0 auto;">
-           <a href="https://trivy-dun.vercel.app/reset/password/${token}" style=" text-decoration: none; ">
+           <a href="https://trivy-emeey-lanr.vercel.app/reset/password/${token}" style=" text-decoration: none; ">
       
           <button style="background:#03a26c; text-align:center;font-size: 0.8rem;  border:none; width:100%; height:40px;color:white;">
             Reset

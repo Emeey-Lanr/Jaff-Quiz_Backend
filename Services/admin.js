@@ -191,7 +191,7 @@ class Admin {
             
         } catch (error) {
   
-            return new Error("an error occured")
+            return new Error("An error occured")
             
         }
         
